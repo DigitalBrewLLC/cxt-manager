@@ -9,8 +9,8 @@ importers:
   cli:
     dependencies:
       '@cxtmanager/core':
-        specifier: ^1.0.0
-        version: 1.0.0
+        specifier: workspace:*
+        version: link:../core
       chalk:
         specifier: ^5.3.0
         version: 5.6.2
@@ -252,10 +252,6 @@ packages:
 
   '@bcoe/v8-coverage@0.2.3':
     resolution: {integrity: sha512-0hYQ8SB4Db5zvZB4axdMHGwEaQjkZzFjQiN9LVYvIFB2nSUHW9tYpxWriPrWDASIxiaXax83REcLxuSdnGPZtw==}
-
-  '@cxtmanager/core@1.0.0':
-    resolution: {integrity: sha512-Ysgt8O1vvtiXttxJmbZO33QxgjsGX0GGLTMeBnON1Nb3PGxMUEGagX/WzE37eDhUnWo0069olpGDzu6gATx+5w==}
-    engines: {node: '>=18.0.0'}
 
   '@eslint-community/eslint-utils@4.9.0':
     resolution: {integrity: sha512-ayVFHdtZ+hsq1t2Dy24wCmGXGe4q9Gu3smhLYALJrr473ZH27MsnSL+LKUlimp4BWJqMDMLmPpx/Q9R3OAlL4g==}
@@ -2118,15 +2114,6 @@ snapshots:
       '@babel/helper-validator-identifier': 7.28.5
 
   '@bcoe/v8-coverage@0.2.3': {}
-
-  '@cxtmanager/core@1.0.0':
-    dependencies:
-      chalk: 5.6.2
-      fs-extra: 11.3.2
-      simple-git: 3.30.0
-      yaml: 2.8.2
-    transitivePeerDependencies:
-      - supports-color
 
   '@eslint-community/eslint-utils@4.9.0(eslint@8.57.1)':
     dependencies:
