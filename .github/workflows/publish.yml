@@ -54,7 +54,7 @@ jobs:
       - name: Build packages
         run: |
           pnpm --filter @cxtmanager/core build
-          pnpm --filter cxtmanager-cli build
+          pnpm --filter @cxtmanager/cli build
 
       - name: Check for code changes
         id: check-changes
@@ -83,7 +83,7 @@ jobs:
         if: steps.check-changes.outputs.has_code_changes == 'true'
         run: |
           pnpm --filter @cxtmanager/core test
-          pnpm --filter cxtmanager-cli test
+          pnpm --filter @cxtmanager/cli test
 
       - name: Check if version already released
         if: steps.check-changes.outputs.has_code_changes == 'true'
@@ -184,7 +184,7 @@ jobs:
           fi
           
           # Check if packages are already published on npm
-          if npm view cxtmanager-cli@$CLI_VERSION version >/dev/null 2>&1; then
+          if npm view @cxtmanager/cli@$CLI_VERSION version >/dev/null 2>&1; then
             echo "cli_published=true" >> $GITHUB_OUTPUT
           else
             echo "cli_published=false" >> $GITHUB_OUTPUT
@@ -240,15 +240,35 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
-      - name: Publish cxtmanager-cli
+      - name: Publish @cxtmanager/cli
         if: steps.check-changes.outputs.has_code_changes == 'true' && steps.check-release.outputs.already_released == 'false' && steps.version-check.outputs.tag_exists == 'true' && steps.version-check.outputs.cli_published == 'false'
         working-directory: ./cli
         run: |
           VERSION=$(node -p "require('./package.json').version")
-          echo "Publishing cxtmanager-cli@$VERSION"
+          PACKAGE_NAME=$(node -p "require('./package.json').name")
+          echo "Publishing $PACKAGE_NAME@$VERSION"
+          
+          # Verify package.json doesn't have workspace: protocol
+          echo "Verifying package.json before publish..."
+          if grep -q '"workspace:' package.json; then
+            echo "❌ ERROR: package.json still contains workspace: protocol"
+            echo "Current dependencies:"
+            grep -A 5 '"dependencies"' package.json
+            exit 1
+          fi
+          
+          # Check if package name is available (this will fail if name is taken, but gives us info)
+          echo "Checking package availability..."
+          npm view "$PACKAGE_NAME@$VERSION" version 2>&1 || echo "Package version not found (expected for new version)"
           
           # Ensure npm is authenticated
           echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}" > .npmrc
+          
+          # Verify authentication
+          echo "Verifying npm authentication..."
+          npm whoami || (echo "❌ ERROR: npm authentication failed" && exit 1)
+          
+          echo "Publishing $PACKAGE_NAME@$VERSION..."
           npm publish --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

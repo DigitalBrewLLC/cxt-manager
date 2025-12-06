@@ -1,5 +1,5 @@
 {
-  "name": "cxtmanager-cli",
+  "name": "@cxtmanager/cli",
   "version": "1.0.9",
   "description": "Git-like CLI for AI context management",
   "main": "dist/index.js",

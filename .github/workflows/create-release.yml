@@ -30,7 +30,7 @@ jobs:
             
             This release corresponds to the npm packages published at this version:
             - `@cxtmanager/core@${{ github.event.inputs.version }}`
-            - `cxtmanager-cli@${{ github.event.inputs.version }}`
+            - `@cxtmanager/cli@${{ github.event.inputs.version }}`
             
             See the [changelog](https://github.com/DigitalBrewLLC/cxt-manager/blob/main/CHANGELOG.md) for details.
           draft: false
