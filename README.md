@@ -34,13 +34,13 @@ Now your AI assistant can:
 
 ### Installation
 ```bash
-npm install -g cxtmanager-cli
+npm install -g @cxtmanager/cli
 
 # Or using pnpm:
-pnpm add -g cxtmanager-cli
+pnpm add -g @cxtmanager/cli
 
 # Or using yarn:
-yarn global add cxtmanager-cli
+yarn global add @cxtmanager/cli
 ```
 
 ### Initialize Your Project
@@ -215,7 +215,7 @@ This is a monorepo containing:
 ### `@cxtmanager/core`
 Framework-agnostic library for context management, Git integration, and validation.
 
-### `cxtmanager-cli`
+### `@cxtmanager/cli`
 The `cit` command-line tool built on `@cxtmanager/core`.
 
 ```bash
@@ -241,7 +241,7 @@ See individual package READMEs for more details:
 
 Packages are published independently to npm:
 - `@cxtmanager/core` - Core library
-- `cxtmanager-cli` - CLI tool
+- `@cxtmanager/cli` - CLI tool
 
 ## Links
 
