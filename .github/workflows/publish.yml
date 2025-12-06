@@ -35,6 +35,8 @@ jobs:
         with:
           node-version: '20'
           registry-url: 'https://registry.npmjs.org'
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v2
@@ -159,6 +161,9 @@ jobs:
         run: |
           VERSION=$(node -p "require('./package.json').version")
           echo "Publishing @cxtmanager/core@$VERSION"
+          
+          # Ensure npm is authenticated
+          echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}" > .npmrc
           npm publish --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
@@ -196,6 +201,9 @@ jobs:
         run: |
           VERSION=$(node -p "require('./package.json').version")
           echo "Publishing cxtmanager-cli@$VERSION"
+          
+          # Ensure npm is authenticated
+          echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}" > .npmrc
           npm publish --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
