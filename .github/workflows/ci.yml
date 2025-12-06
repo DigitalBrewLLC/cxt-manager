@@ -67,7 +67,7 @@ jobs:
           
           # Validate that both packages have required fields
           echo "Validating required package fields..."
-          node -e "
+          node << 'EOF'
             const fs = require('fs');
             const corePkg = JSON.parse(fs.readFileSync('core/package.json', 'utf8'));
             const cliPkg = JSON.parse(fs.readFileSync('cli/package.json', 'utf8'));
@@ -93,7 +93,7 @@ jobs:
             }
             
             console.log('✅ All package.json files are valid for publishing');
-          "
+EOF
 
       - name: Test dependency update logic
         run: |
@@ -104,19 +104,20 @@ jobs:
           echo "Current core version: $CORE_VERSION"
           
           # Test updating CLI dependency
-          node -e "
+          node << EOF
             const fs = require('fs');
             const path = './cli/package.json';
             const pkg = JSON.parse(fs.readFileSync(path, 'utf8'));
             const originalDep = pkg.dependencies['@cxtmanager/core'];
+            const coreVersion = '$CORE_VERSION';
             
             console.log('Original dependency:', originalDep);
             
             // Update to version (simulating publish workflow)
-            pkg.dependencies['@cxtmanager/core'] = '^' + '$CORE_VERSION';
+            pkg.dependencies['@cxtmanager/core'] = '^' + coreVersion;
             
             // Verify the update worked
-            if (pkg.dependencies['@cxtmanager/core'] !== '^' + '$CORE_VERSION') {
+            if (pkg.dependencies['@cxtmanager/core'] !== '^' + coreVersion) {
               console.error('❌ Failed to update dependency');
               process.exit(1);
             }
@@ -128,7 +129,7 @@ jobs:
             fs.writeFileSync(path, JSON.stringify(pkg, null, 2) + '\n');
             
             console.log('✅ Dependency update logic works correctly');
-          "
+EOF
 
       - name: Validate build outputs
         run: |
@@ -172,14 +173,15 @@ jobs:
           CORE_VERSION=$(node -p "require('./core/package.json').version")
           
           # Temporarily update CLI dependency for testing
-          node -e "
+          CORE_VERSION=$(node -p "require('./core/package.json').version")
+          node << EOF
             const fs = require('fs');
             const path = './cli/package.json';
             const pkg = JSON.parse(fs.readFileSync(path, 'utf8'));
-            const originalDep = pkg.dependencies['@cxtmanager/core'];
-            pkg.dependencies['@cxtmanager/core'] = '^' + '$CORE_VERSION';
+            const coreVersion = '$CORE_VERSION';
+            pkg.dependencies['@cxtmanager/core'] = '^' + coreVersion;
             fs.writeFileSync(path, JSON.stringify(pkg, null, 2) + '\n');
-          "
+EOF
           
           cd cli
           npm pack --dry-run
@@ -187,13 +189,13 @@ jobs:
           cd ..
           
           # Restore original dependency
-          node -e "
+          node << 'EOF'
             const fs = require('fs');
             const path = './cli/package.json';
             const pkg = JSON.parse(fs.readFileSync(path, 'utf8'));
             pkg.dependencies['@cxtmanager/core'] = 'workspace:*';
             fs.writeFileSync(path, JSON.stringify(pkg, null, 2) + '\n');
-          "
+EOF
           
           if [ $PACK_EXIT -ne 0 ]; then
             echo "❌ ERROR: Failed to pack cxtmanager-cli"
@@ -241,13 +243,15 @@ jobs:
           
           # Update CLI dependency for testing
           echo "Updating CLI dependency for publish test..."
-          node -e "
+          CORE_VERSION=$(node -p "require('./core/package.json').version")
+          node << EOF
             const fs = require('fs');
             const path = './cli/package.json';
             const pkg = JSON.parse(fs.readFileSync(path, 'utf8'));
-            pkg.dependencies['@cxtmanager/core'] = '^' + '$CORE_VERSION';
+            const coreVersion = '$CORE_VERSION';
+            pkg.dependencies['@cxtmanager/core'] = '^' + coreVersion;
             fs.writeFileSync(path, JSON.stringify(pkg, null, 2) + '\n');
-          "
+EOF
           
           # Test CLI package publish validation
           echo "Testing cxtmanager-cli publish validation..."
@@ -269,13 +273,13 @@ jobs:
           cd ..
           
           # Restore original dependency
-          node -e "
+          node << 'EOF'
             const fs = require('fs');
             const path = './cli/package.json';
             const pkg = JSON.parse(fs.readFileSync(path, 'utf8'));
             pkg.dependencies['@cxtmanager/core'] = 'workspace:*';
             fs.writeFileSync(path, JSON.stringify(pkg, null, 2) + '\n');
-          "
+EOF
           
           if [ $PUBLISH_EXIT -ne 0 ]; then
             echo "❌ ERROR: npm publish --dry-run failed for cxtmanager-cli"
