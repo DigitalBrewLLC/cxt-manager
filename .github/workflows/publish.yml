@@ -220,14 +220,14 @@ jobs:
           
           # Update package.json to use version instead of workspace:*
           # This is critical - npm cannot publish packages with workspace: protocol
-          node << EOF
+          node <<EOF
             const fs = require('fs');
             const path = './cli/package.json';
             const pkg = JSON.parse(fs.readFileSync(path, 'utf8'));
             const coreVersion = '$CORE_VERSION';
             pkg.dependencies['@cxtmanager/core'] = '^' + coreVersion;
             fs.writeFileSync(path, JSON.stringify(pkg, null, 2) + '\n');
-EOF
+          EOF
           
           # Verify the update
           echo "Updated CLI package.json dependency:"
@@ -259,13 +259,13 @@ EOF
           echo "Restoring CLI dependency to workspace:* for development"
           
           # Restore package.json to use workspace: protocol for development
-          node << 'EOF'
+          node <<'EOF'
             const fs = require('fs');
             const path = './cli/package.json';
             const pkg = JSON.parse(fs.readFileSync(path, 'utf8'));
             pkg.dependencies['@cxtmanager/core'] = 'workspace:*';
             fs.writeFileSync(path, JSON.stringify(pkg, null, 2) + '\n');
-EOF
+          EOF
           
           # Verify the restoration
           echo "Restored CLI package.json dependency:"

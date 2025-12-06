@@ -1,6 +1,6 @@
 {
   "name": "cxtmanager",
-  "version": "1.0.8",
+  "version": "1.0.9",
   "private": true,
   "description": "CxtManager - Git for AI Context",
   "scripts": {
