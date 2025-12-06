@@ -35,6 +35,12 @@ Now your AI assistant can:
 ### Installation
 ```bash
 npm install -g cxtmanager-cli
+
+# Or using pnpm:
+pnpm add -g cxtmanager-cli
+
+# Or using yarn:
+yarn global add cxtmanager-cli
 ```
 
 ### Initialize Your Project

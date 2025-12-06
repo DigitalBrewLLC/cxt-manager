@@ -77,7 +77,6 @@ export class ContextManager {
     }
 
     // Initial Git commit (only if tracking in Git)
-    const trackInGit = options.trackInGit !== false; // Default to true
     if (trackInGit) {
       await this.gitRepo.addAndCommit(
         ['.cxt/'],

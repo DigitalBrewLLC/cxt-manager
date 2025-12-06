@@ -25,7 +25,7 @@ export const commitCommand = new Command('commit')
             type: 'input',
             name: 'message',
             message: 'Commit message:',
-            validate: (input) => input.trim().length > 0 || 'Please enter a commit message'
+            validate: (input: string) => input.trim().length > 0 || 'Please enter a commit message'
           }
         ]);
         message = answers.message;
