@@ -247,7 +247,7 @@ Packages are published independently to npm:
 
 - **Website:** [cxtmanager.dev](https://cxtmanager.dev)
 - **Documentation:** [cxtmanager.dev/docs](https://cxtmanager.dev/docs)
-- **GitHub:** [github.com/cxtmanager/cxtmanager](https://github.com/cxtmanager/cxtmanager)
+- **GitHub:** [github.com/DigitalBrewLLC/cxt-manager](https://github.com/DigitalBrewLLC/cxt-manager)
 - **Support:** hello@digitalbrew.tech
 
 ## License
