@@ -163,13 +163,30 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
-      - name: Update CLI dependency
+      - name: Update CLI dependency for publishing
         if: steps.check-changes.outputs.has_code_changes == 'true' && steps.check-release.outputs.already_released == 'false' && steps.version-check.outputs.tag_exists == 'true' && steps.version-check.outputs.core_published == 'false'
         run: |
           CORE_VERSION=$(node -p "require('./core/package.json').version")
-          cd cli
-          pnpm add @cxtmanager/core@$CORE_VERSION
-          cd ..
+          echo "Updating CLI dependency to @cxtmanager/core@^$CORE_VERSION for publishing"
+          
+          # Update package.json to use version instead of workspace:*
+          # This is critical - npm cannot publish packages with workspace: protocol
+          node -e "
+            const fs = require('fs');
+            const path = './cli/package.json';
+            const pkg = JSON.parse(fs.readFileSync(path, 'utf8'));
+            pkg.dependencies['@cxtmanager/core'] = '^' + '$CORE_VERSION';
+            fs.writeFileSync(path, JSON.stringify(pkg, null, 2) + '\n');
+          "
+          
+          # Verify the update
+          echo "Updated CLI package.json dependency:"
+          grep -A 1 '"@cxtmanager/core"' cli/package.json
+          
+          # Note: We don't need to rebuild here because:
+          # 1. The workspace dependency is still available for building
+          # 2. The prepublishOnly script will rebuild before publishing
+          # 3. The updated package.json will be included in the published package
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
