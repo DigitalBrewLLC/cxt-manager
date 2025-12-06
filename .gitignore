@@ -5,9 +5,14 @@ node_modules/
 .pnpm-store/
 
 # Build outputs
+**/dist/
 dist/
 build/
 *.tsbuildinfo
+
+# Scripts (keep publishing scripts private)
+scripts/
+**/scripts/
 
 # Testing
 coverage/
