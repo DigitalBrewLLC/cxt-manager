@@ -37,6 +37,4 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 
-# Optional: Uncomment if you want to keep publishing scripts private
-# scripts/publish.js
 

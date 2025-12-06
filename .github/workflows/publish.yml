@@ -1,0 +1,104 @@
+name: Publish Packages
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'core/**'
+      - 'cli/**'
+      - 'package.json'
+      - '.github/workflows/publish.yml'
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      id-token: write
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 10
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build packages
+        run: |
+          pnpm --filter @cxtmanager/core build
+          pnpm --filter cxtmanager-cli build
+
+      - name: Run tests
+        run: |
+          pnpm --filter @cxtmanager/core test
+          pnpm --filter cxtmanager-cli test
+
+      - name: Check for version tag
+        id: check-tag
+        run: |
+          # Check if this commit has a version tag (created by standard-version)
+          TAG=$(git describe --tags --exact-match HEAD 2>/dev/null || echo "")
+          if [ -n "$TAG" ]; then
+            echo "has_tag=true" >> $GITHUB_OUTPUT
+            echo "tag=$TAG" >> $GITHUB_OUTPUT
+          else
+            echo "has_tag=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Publish @cxtmanager/core
+        if: steps.check-tag.outputs.has_tag == 'true'
+        working-directory: ./core
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          echo "Publishing @cxtmanager/core@$VERSION"
+          npm publish --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Update CLI dependency
+        if: steps.check-tag.outputs.has_tag == 'true'
+        run: |
+          CORE_VERSION=$(node -p "require('./core/package.json').version")
+          cd cli
+          pnpm add @cxtmanager/core@$CORE_VERSION
+          cd ..
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Publish cxtmanager-cli
+        if: steps.check-tag.outputs.has_tag == 'true'
+        working-directory: ./cli
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          echo "Publishing cxtmanager-cli@$VERSION"
+          npm publish --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Create GitHub Release
+        if: steps.check-tag.outputs.has_tag == 'true'
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ steps.check-tag.outputs.tag }}
+          release_name: Release ${{ steps.check-tag.outputs.tag }}
+          body_path: CHANGELOG.md
+          draft: false
+          prerelease: false
+
