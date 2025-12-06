@@ -7,7 +7,8 @@
     "release": "standard-version",
     "release:minor": "standard-version --release-as minor",
     "release:major": "standard-version --release-as major",
-    "release:patch": "standard-version --release-as patch"
+    "release:patch": "standard-version --release-as patch",
+    "test:ci": "pnpm -r test"
   },
   "devDependencies": {
     "standard-version": "^9.5.0"
@@ -18,8 +19,5 @@
   },
   "author": "Digital Brew LLC <hello@digitalbrew.tech>",
   "license": "AGPL-3.0",
-  "packageManager": "pnpm@10.13.1+sha512.37ebf1a5c7a30d5fabe0c5df44ee8da4c965ca0c5af3dbab28c3a1681b70a256218d05c81c9c0dcf767ef6b8551eb5b960042b9ed4300c59242336377e01cfad",
-  "dependencies": {
-    "simple-git": "^3.30.0"
-  }
+  "packageManager": "pnpm@10.13.1+sha512.37ebf1a5c7a30d5fabe0c5df44ee8da4c965ca0c5af3dbab28c3a1681b70a256218d05c81c9c0dcf767ef6b8551eb5b960042b9ed4300c59242336377e01cfad"
 }

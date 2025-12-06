@@ -56,6 +56,13 @@ describe('GitRepository', () => {
       const git = simpleGit(testDir);
       await git.init();
       
+      try {
+        await git.addConfig('user.name', 'Test User', false, 'local');
+        await git.addConfig('user.email', 'test@example.com', false, 'local');
+      } catch {
+        // Ignore config errors
+      }
+      
       // Create and modify a file
       const testFile = path.join(testDir, 'test.txt');
       fs.writeFileSync(testFile, 'initial');
@@ -84,6 +91,13 @@ describe('GitRepository', () => {
       const git = simpleGit(testDir);
       await git.init();
       
+      try {
+        await git.addConfig('user.name', 'Test User', false, 'local');
+        await git.addConfig('user.email', 'test@example.com', false, 'local');
+      } catch {
+        // Ignore config errors
+      }
+      
       const testFile = path.join(testDir, 'test.txt');
       fs.writeFileSync(testFile, 'content');
       await git.add(['test.txt']);
@@ -110,6 +124,13 @@ describe('GitRepository', () => {
     it('should commit files', async () => {
       const git = simpleGit(testDir);
       await git.init();
+      
+      try {
+        await git.addConfig('user.name', 'Test User', false, 'local');
+        await git.addConfig('user.email', 'test@example.com', false, 'local');
+      } catch {
+        // Ignore config errors
+      }
       
       const testFile = path.join(testDir, 'test.txt');
       fs.writeFileSync(testFile, 'content');
