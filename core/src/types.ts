@@ -119,9 +119,9 @@ export interface GitInfo {
 }
 
 export interface ProjectAnalysis {
-  packageJson: any | null;
+  packageJson: Record<string, unknown> | null;
   readme: string;
-  structure: any;
+  structure: ProjectStructure;
   gitInfo: GitInfo;
   technologies: string[];
 }
@@ -182,4 +182,22 @@ export interface StatusInfo {
     size?: number;
   }>;
   lastUpdated: Date;
+}
+
+export interface CommitHistoryEntry {
+  hash: string;
+  message: string;
+  author: string;
+  email: string;
+  date: Date;
+  refs?: string;
+}
+
+export interface BlameEntry {
+  line: number;
+  hash: string;
+  author: string;
+  email: string;
+  date: Date;
+  content: string;
 } 

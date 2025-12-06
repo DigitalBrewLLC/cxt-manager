@@ -19,11 +19,19 @@ import { syncGitignoreCommand } from './commands/sync-gitignore';
 
 const program = new Command();
 
+// Read version from package.json
+import { readFileSync } from 'fs';
+import { join } from 'path';
+
+const packageJson = JSON.parse(
+  readFileSync(join(__dirname, '../package.json'), 'utf8')
+);
+
 // Global CLI setup
 program
   .name('cit')
   .description('Git for AI Context - Stop being the context monkey')
-  .version('1.0.0');
+  .version(packageJson.version);
 
 // Add all commands
 program.addCommand(initCommand);

@@ -1,7 +1,7 @@
 import { simpleGit, SimpleGit, StatusResult } from 'simple-git';
 import * as fs from 'fs-extra';
 import * as path from 'path';
-import { GitInfo } from './types';
+import { GitInfo, CommitHistoryEntry, BlameEntry } from './types';
 
 /**
  * GitRepository - Handles all Git operations for CxtManager
@@ -70,15 +70,16 @@ export class GitRepository {
       } else {
         await this.git.commit(message);
       }
-    } catch (error: any) {
-      if (error.message.includes('EACCES') || error.message.includes('permission denied')) {
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      if (errorMessage.includes('EACCES') || errorMessage.includes('permission denied')) {
         throw new Error(
           'Permission denied. Cannot write to Git repository.\n' +
           '  💡 Check file system permissions\n' +
           '  💡 Ensure you have write access to .git/ directory'
         );
       }
-      if (error.message.includes('not a git repository')) {
+      if (errorMessage.includes('not a git repository')) {
         throw new Error(
           'Not a Git repository.\n' +
           '  💡 Run "git init" to initialize a Git repository\n' +
@@ -113,8 +114,9 @@ export class GitRepository {
         modified: status.modified,
         untracked: status.not_added
       };
-    } catch (error: any) {
-      if (error.message.includes('not a git repository')) {
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      if (errorMessage.includes('not a git repository')) {
         throw new Error(
           'Not a Git repository.\n' +
           '  💡 Run "git init" to initialize a Git repository\n' +
@@ -186,7 +188,7 @@ export class GitRepository {
   /**
    * Get file blame information
    */
-  async blame(filePath: string): Promise<any[]> {
+  async blame(filePath: string): Promise<BlameEntry[]> {
     try {
       const blame = await this.git.raw(['blame', '--line-porcelain', filePath]);
       return this.parseBlameOutput(blame);
@@ -199,10 +201,10 @@ export class GitRepository {
   /**
    * Get commit log for a file
    */
-  async getFileHistory(filePath: string): Promise<any[]> {
+  async getFileHistory(filePath: string): Promise<CommitHistoryEntry[]> {
     try {
       const log = await this.git.log({ file: filePath });
-      return log.all.map(commit => ({
+      return log.all.map((commit: { hash: string; message: string; author_name: string; author_email: string; date: string; refs?: string }): CommitHistoryEntry => ({
         hash: commit.hash,
         message: commit.message,
         author: commit.author_name,
@@ -270,16 +272,17 @@ export class GitRepository {
     }
   }
 
-  private parseBlameOutput(blameText: string): any[] {
+  private parseBlameOutput(blameText: string): BlameEntry[] {
     // TODO: Implement proper blame parsing
     // This is a simplified version - full implementation would parse the porcelain format
     const lines = blameText.split('\n');
-    return lines.map((line, index) => ({
+    return lines.map((line, index): BlameEntry => ({
       line: index + 1,
       content: line,
       author: 'unknown',
+      email: 'unknown',
       hash: 'unknown',
-      timestamp: new Date()
+      date: new Date()
     }));
   }
 

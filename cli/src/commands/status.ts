@@ -1,6 +1,7 @@
 import { Command } from 'commander';
 import chalk from 'chalk';
-import { ContextManager, StatusInfo } from '@cxtmanager/core';
+import { ContextManager } from '@cxtmanager/core';
+import type { StatusInfo } from '@cxtmanager/core';
 
 export const statusCommand = new Command('status')
   .description('Show context file status and alignment health')
@@ -31,21 +32,21 @@ export const statusCommand = new Command('status')
       console.log(chalk.bold('📊 Git Status:'));
       if (status.gitStatus.staged.length > 0) {
         console.log(chalk.green('  Changes staged for commit:'));
-        status.gitStatus.staged.forEach(file => {
+        status.gitStatus.staged.forEach((file: string) => {
           console.log(chalk.green(`    modified: ${file}`));
         });
       }
       
       if (status.gitStatus.modified.length > 0) {
         console.log(chalk.yellow('  Changes not staged for commit:'));
-        status.gitStatus.modified.forEach(file => {
+        status.gitStatus.modified.forEach((file: string) => {
           console.log(chalk.yellow(`    modified: ${file}`));
         });
       }
       
       if (status.gitStatus.untracked.length > 0) {
         console.log(chalk.red('  Untracked files:'));
-        status.gitStatus.untracked.forEach(file => {
+        status.gitStatus.untracked.forEach((file: string) => {
           console.log(chalk.red(`    ${file}`));
         });
       }
@@ -78,7 +79,7 @@ export const statusCommand = new Command('status')
       if (status.health.issues.length > 0) {
         console.log('');
         console.log(chalk.bold('⚠️  Issues Found:'));
-        status.health.issues.forEach((issue, index) => {
+        status.health.issues.forEach((issue: StatusInfo['health']['issues'][number], index: number) => {
           const icon = issue.type === 'error' ? '❌' : '⚠️';
           console.log(`  ${icon} ${issue.file}: ${issue.message}`);
           if (issue.suggestion) {
@@ -91,7 +92,7 @@ export const statusCommand = new Command('status')
       if (status.health.suggestions.length > 0) {
         console.log('');
         console.log(chalk.bold('💡 Suggestions:'));
-        status.health.suggestions.forEach(suggestion => {
+        status.health.suggestions.forEach((suggestion: string) => {
           console.log(`  ${suggestion}`);
         });
       }

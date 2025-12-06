@@ -1,6 +1,7 @@
 import { Command } from 'commander';
 import chalk from 'chalk';
 import { ContextManager } from '@cxtmanager/core';
+import type { HealthIssue } from '@cxtmanager/core';
 
 export const autoHealCommand = new Command('auto-heal')
   .description('Automatically fix context alignment issues')
@@ -27,7 +28,7 @@ export const autoHealCommand = new Command('auto-heal')
       // If --if-needed, check health first
       if (ifNeeded) {
         const health = await manager.validate(true); // Quick validation
-        const hasAutoFixableIssues = health.issues.some(i => i.autoFixable);
+        const hasAutoFixableIssues = health.issues.some((i: HealthIssue) => i.autoFixable);
         
         if (!hasAutoFixableIssues) {
           // No issues to fix, exit silently
@@ -54,7 +55,7 @@ export const autoHealCommand = new Command('auto-heal')
 
       if (!silent) {
         console.log(chalk.bold(`${dryRun ? '📋 Would make these changes:' : '✅ Applied fixes:'}`));
-        fixes.forEach((fix, index) => {
+        fixes.forEach((fix: string, index: number) => {
           const prefix = index === fixes.length - 1 ? '└──' : '├──';
           console.log(`${prefix} ${fix}`);
         });
@@ -73,24 +74,25 @@ export const autoHealCommand = new Command('auto-heal')
         console.log(chalk.green(`✅ Auto-healed ${fixes.length} issue(s)`));
       }
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       // Handle specific error types with helpful messages
-      if (error.message.includes('Not a Git repository')) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      if (errorMessage.includes('Not a Git repository')) {
         console.error(chalk.red('❌ Not a Git repository'));
         console.log(chalk.yellow('💡 Run "git init" to initialize a Git repository'));
         console.log(chalk.yellow('💡 Or run "cit init" which will initialize Git automatically'));
-      } else if (error.message.includes('Permission denied') || error.message.includes('EACCES')) {
+      } else if (errorMessage.includes('Permission denied') || errorMessage.includes('EACCES')) {
         console.error(chalk.red('❌ Permission denied'));
         console.log(chalk.yellow('💡 Check file system permissions'));
         console.log(chalk.yellow('💡 Ensure you have write access to .cxt/ directory'));
-      } else if (error.message.includes('ENOENT') || error.message.includes('no such file')) {
+      } else if (errorMessage.includes('ENOENT') || errorMessage.includes('no such file')) {
         console.error(chalk.red('❌ .cxt/ folder not found'));
         console.log(chalk.yellow('💡 Run "cit init" to initialize CxtManager'));
       } else {
-        console.error(chalk.red('❌ Auto-heal failed:'), error.message);
+        console.error(chalk.red('❌ Auto-heal failed:'), errorMessage);
       }
       
-      if (process.env.DEBUG) {
+      if (process.env.DEBUG && error instanceof Error) {
         console.error(error.stack);
       }
       process.exit(1);

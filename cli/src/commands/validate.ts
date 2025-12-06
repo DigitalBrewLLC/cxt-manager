@@ -1,6 +1,7 @@
 import { Command } from 'commander';
 import chalk from 'chalk';
 import { ContextManager } from '@cxtmanager/core';
+import type { HealthIssue, HealthStatus } from '@cxtmanager/core';
 
 export const validateCommand = new Command('validate')
   .description('Validate context file alignment and consistency')
@@ -29,7 +30,7 @@ export const validateCommand = new Command('validate')
       
       // In silent mode, only show errors
       if (options.silent) {
-        const hasErrors = health.issues.some(i => i.type === 'error');
+        const hasErrors = health.issues.some((i: HealthIssue) => i.type === 'error');
         if (hasErrors) {
           console.error(chalk.red('❌ Context validation failed'));
           console.error(chalk.yellow('💡 Run "cit status" to see details'));
@@ -57,7 +58,7 @@ export const validateCommand = new Command('validate')
       // Show issues
       if (health.issues.length > 0) {
         console.log(chalk.bold('⚠️  Issues Found:'));
-        health.issues.forEach((issue, index) => {
+        health.issues.forEach((issue: HealthIssue, index: number) => {
           const icon = issue.type === 'error' ? '❌' : '⚠️';
           const prefix = index === health.issues.length - 1 ? '└──' : '├──';
           
@@ -86,7 +87,7 @@ export const validateCommand = new Command('validate')
       // Show suggestions
       if (health.suggestions.length > 0) {
         console.log(chalk.bold('💡 Recommendations:'));
-        health.suggestions.forEach((suggestion, index) => {
+        health.suggestions.forEach((suggestion: string, index: number) => {
           const prefix = index === health.suggestions.length - 1 ? '└──' : '├──';
           console.log(`${prefix} ${suggestion}`);
         });
@@ -98,7 +99,7 @@ export const validateCommand = new Command('validate')
         console.log(chalk.green('✅ All context files are well-aligned!'));
         console.log(chalk.gray('   Your AI assistants can confidently reference these files.'));
       } else {
-        const autoFixableCount = health.issues.filter(i => i.autoFixable).length;
+        const autoFixableCount = health.issues.filter((i: HealthIssue) => i.autoFixable).length;
         
         if (autoFixableCount > 0) {
           console.log(chalk.yellow(`🔧 ${autoFixableCount} issues can be fixed automatically:`));
@@ -106,7 +107,7 @@ export const validateCommand = new Command('validate')
           console.log(chalk.blue('   cit auto-heal              # Apply fixes'));
         }
         
-        const manualCount = health.issues.filter(i => !i.autoFixable).length;
+        const manualCount = health.issues.filter((i: HealthIssue) => !i.autoFixable).length;
         if (manualCount > 0) {
           console.log(chalk.yellow(`✏️  ${manualCount} issues need manual attention.`));
         }
@@ -116,35 +117,36 @@ export const validateCommand = new Command('validate')
       console.log(chalk.gray(`Validation completed at ${health.lastChecked.toLocaleString()}`));
 
       // Exit with error code if there are errors
-      const hasErrors = health.issues.some(i => i.type === 'error');
+      const hasErrors = health.issues.some((i: HealthIssue) => i.type === 'error');
       if (hasErrors) {
         process.exit(1);
       }
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       // Handle specific error types with helpful messages
-      if (error.message.includes('Not a Git repository')) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      if (errorMessage.includes('Not a Git repository')) {
         if (!options.silent) {
           console.error(chalk.red('❌ Not a Git repository'));
           console.log(chalk.yellow('💡 Run "git init" to initialize a Git repository'));
           console.log(chalk.yellow('💡 Or run "cit init" which will initialize Git automatically'));
         }
-      } else if (error.message.includes('Permission denied') || error.message.includes('EACCES')) {
+      } else if (errorMessage.includes('Permission denied') || errorMessage.includes('EACCES')) {
         console.error(chalk.red('❌ Permission denied'));
         console.log(chalk.yellow('💡 Check file system permissions'));
         console.log(chalk.yellow('💡 Ensure you have read access to .cxt/ directory'));
-      } else if (error.message.includes('ENOENT') || error.message.includes('no such file')) {
+      } else if (errorMessage.includes('ENOENT') || errorMessage.includes('no such file')) {
         if (!options.silent) {
           console.error(chalk.red('❌ .cxt/ folder not found'));
           console.log(chalk.yellow('💡 Run "cit init" to initialize CxtManager'));
         }
       } else {
         if (!options.silent) {
-          console.error(chalk.red('❌ Validation failed:'), error.message);
+          console.error(chalk.red('❌ Validation failed:'), errorMessage);
         }
       }
       
-      if (process.env.DEBUG) {
+      if (process.env.DEBUG && error instanceof Error) {
         console.error(error.stack);
       }
       process.exit(1);

@@ -4,7 +4,7 @@ import { GitRepository } from './git-repository';
 import { FileWatcher } from './file-watcher';
 import { ValidationEngine } from './validation-engine';
 import { PlanManager } from './plan-manager';
-import { CxtConfig, InitOptions, ProjectAnalysis, StatusInfo, HealthStatus, ContextFile, SyncPlanOptions, SyncPlanResult } from './types';
+import { CxtConfig, InitOptions, ProjectAnalysis, StatusInfo, HealthStatus, ContextFile, SyncPlanOptions, SyncPlanResult, ProjectStructure } from './types';
 
 export class ContextManager {
   private projectRoot: string;
@@ -29,8 +29,9 @@ export class ContextManager {
     try {
       // Ensure we're in a Git repository
       await this.gitRepo.ensureGitRepo();
-    } catch (error: any) {
-      if (error.message.includes('EACCES') || error.message.includes('permission denied')) {
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      if (errorMessage.includes('EACCES') || errorMessage.includes('permission denied')) {
         throw new Error(
           'Permission denied. Cannot initialize Git repository.\n' +
           '  💡 Check file system permissions\n' +
@@ -43,8 +44,9 @@ export class ContextManager {
     try {
       // Create .cxt structure
       await this.createCxtStructure();
-    } catch (error: any) {
-      if (error.message.includes('EACCES') || error.message.includes('permission denied')) {
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      if (errorMessage.includes('EACCES') || errorMessage.includes('permission denied')) {
         throw new Error(
           'Permission denied. Cannot create .cxt/ folder.\n' +
           '  💡 Check file system permissions\n' +
@@ -284,7 +286,7 @@ export class ContextManager {
     return structure;
   }
 
-  private detectTechnologies(dependencies: string[], structure: any): string[] {
+  private detectTechnologies(dependencies: string[], structure: ProjectStructure): string[] {
     const technologies: string[] = [];
     
     // Detect based on dependencies

@@ -69,6 +69,7 @@ cit commit "Updated project goals"
 ## Commands
 
 ### Core Commands
+- `cit --version` - Show CLI version
 - `cit init` - Initialize CxtManager in current directory
 - `cit status` - Show context file status, health, and warnings
 - `cit add <file>` - Stage context file changes

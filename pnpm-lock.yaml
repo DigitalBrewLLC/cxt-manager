@@ -7,6 +7,10 @@ settings:
 importers:
 
   .:
+    dependencies:
+      simple-git:
+        specifier: ^3.30.0
+        version: 3.30.0
     devDependencies:
       standard-version:
         specifier: ^9.5.0
@@ -67,7 +71,7 @@ importers:
         specifier: ^11.2.0
         version: 11.3.2
       simple-git:
-        specifier: ^3.27.0
+        specifier: ^3.30.0
         version: 3.30.0
       yaml:
         specifier: ^2.7.0
