@@ -56,6 +56,10 @@ export declare class GitRepository {
     }>;
     private getCommitCount;
     private parseBlameOutput;
-    private ensureGitignore;
+    /**
+     * Ensure .gitignore exists and configure .cxt/ tracking
+     * @param trackInGit - If false, adds .cxt/ to .gitignore for privacy (default: true)
+     */
+    ensureGitignore(trackInGit?: boolean): Promise<void>;
 }
 //# sourceMappingURL=git-repository.d.ts.map

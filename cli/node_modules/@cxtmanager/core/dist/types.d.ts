@@ -13,6 +13,7 @@ export interface GitIntegrationConfig {
     };
     silent_mode: boolean;
     auto_install_hooks: boolean;
+    track_in_git?: boolean;
 }
 export interface TemplateThresholds {
     well_populated: number;
@@ -98,6 +99,7 @@ export interface ContextFile {
 }
 export interface InitOptions {
     mode: 'auto' | 'manual';
+    trackInGit?: boolean;
 }
 export interface GitInfo {
     isRepo: boolean;

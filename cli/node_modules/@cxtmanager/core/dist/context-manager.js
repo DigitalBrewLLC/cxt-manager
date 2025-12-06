@@ -80,6 +80,9 @@ class ContextManager {
         const analysis = await this.analyzeProject();
         // Create configuration
         await this.createConfig(options);
+        // Configure .gitignore based on trackInGit setting
+        const trackInGit = options.trackInGit !== false; // Default to true
+        await this.gitRepo.ensureGitignore(trackInGit);
         // Generate content based on mode
         switch (options.mode) {
             case 'manual':
@@ -91,8 +94,10 @@ class ContextManager {
             default:
                 await this.createBasicContent(analysis);
         }
-        // Initial Git commit
-        await this.gitRepo.addAndCommit(['.cxt/'], `feat: initialize CxtManager with ${options.mode} mode\n\nCreated context files: context.md, plan.md, guardrail.md`, 'CxtManager Init');
+        // Initial Git commit (only if tracking in Git)
+        if (trackInGit) {
+            await this.gitRepo.addAndCommit(['.cxt/'], `feat: initialize CxtManager with ${options.mode} mode\n\nCreated context files: context.md, plan.md, guardrail.md`, 'CxtManager Init');
+        }
     }
     async isInitialized() {
         const cxtExists = await fs.pathExists(this.cxtPath);
@@ -126,6 +131,18 @@ class ContextManager {
         };
         this.validationEngine = new validation_engine_1.ValidationEngine(this.cxtPath, thresholds);
         return await this.validationEngine.checkHealth(quick);
+    }
+    /**
+     * Sync .gitignore with track_in_git setting from config
+     * Call this after manually changing git_integration.track_in_git in .cxtconfig.json
+     */
+    async syncGitignore() {
+        if (!await this.isInitialized()) {
+            throw new Error('CxtManager not initialized');
+        }
+        const config = await this.loadConfig();
+        const trackInGit = config.git_integration?.track_in_git !== false; // Default to true
+        await this.gitRepo.ensureGitignore(trackInGit);
     }
     async autoHeal(dryRun = false) {
         if (!await this.isInitialized()) {
@@ -492,6 +509,7 @@ ${projectDescription}
         return templates[type] || '';
     }
     async createConfig(options) {
+        const trackInGit = options.trackInGit !== false; // Default to true
         const config = {
             version: '1.0.0',
             mode: options.mode,
@@ -503,7 +521,8 @@ ${projectDescription}
                     post_merge: 'auto-heal'
                 },
                 silent_mode: true,
-                auto_install_hooks: true // MVP: Auto-install hooks on init
+                auto_install_hooks: true, // MVP: Auto-install hooks on init
+                track_in_git: trackInGit
             },
             plan_management: {
                 backup_on_switch: true,

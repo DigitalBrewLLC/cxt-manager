@@ -3,11 +3,6 @@
  * Core types for CxtManager - Git for AI Context
  */
 Object.defineProperty(exports, "__esModule", { value: true });
-var InitMode;
-(function (InitMode) {
-    InitMode["AUTO"] = "auto";
-    InitMode["MANUAL"] = "manual";
-})(InitMode || (InitMode = {}));
 var ContextSource;
 (function (ContextSource) {
     ContextSource["AI"] = "ai";

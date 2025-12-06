@@ -200,8 +200,49 @@ exports.initCommand = new commander_1.Command('init')
         console.log('');
         console.log(chalk_1.default.gray('  💡 You can change this later in .cxt/.cxtconfig.json'));
         console.log('');
+        // Question 4: Track in Git
+        console.log('');
+        console.log(chalk_1.default.bold('🔒 Privacy & Git Tracking'));
+        console.log('');
+        console.log('  Should .cxt/ folder be tracked in Git?');
+        console.log('');
+        console.log('  • Tracked (Recommended): Share context with team via Git');
+        console.log('  • Private: Keep context local, add .cxt/ to .gitignore');
+        console.log('');
+        const trackAnswer = await inquirer_1.default.prompt([
+            {
+                type: 'list',
+                name: 'trackInGit',
+                message: 'Choose an option:',
+                choices: [
+                    {
+                        name: '1) Tracked (Recommended) - Share context with team',
+                        value: true,
+                        short: 'Tracked'
+                    },
+                    {
+                        name: '2) Private - Keep context local only',
+                        value: false,
+                        short: 'Private'
+                    }
+                ],
+                default: 0
+            }
+        ]);
+        console.log('');
+        if (trackAnswer.trackInGit) {
+            console.log(chalk_1.default.gray('  💡 Context files will be committed to Git for team sharing'));
+        }
+        else {
+            console.log(chalk_1.default.gray('  💡 Context files will be added to .gitignore (private)'));
+        }
+        console.log('');
+        console.log(chalk_1.default.gray('  💡 You can change this later in .cxt/.cxtconfig.json'));
+        console.log('');
         const spinner = (0, ora_1.default)('Initializing CxtManager...').start();
         spinner.text = `Initializing with mode: ${mode}`;
+        // Add trackInGit to init options
+        initOptions.trackInGit = trackAnswer.trackInGit;
         // Execute initialization
         await manager.init(initOptions);
         // Update config with user's choices

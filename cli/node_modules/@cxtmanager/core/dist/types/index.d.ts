@@ -48,16 +48,13 @@ export interface ContextFile {
     lastModified: Date;
     size: number;
 }
-declare enum InitMode {
-    AUTO = "auto",
-    MANUAL = "manual"
-}
 export interface InitOptions {
-    mode: InitMode;
+    mode: 'auto' | 'manual';
     template?: string;
     ai_model?: string;
     sources?: string[];
     deep_analysis?: boolean;
+    trackInGit?: boolean;
 }
 export interface GitInfo {
     isRepo: boolean;

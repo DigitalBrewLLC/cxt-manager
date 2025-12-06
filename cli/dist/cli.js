@@ -18,6 +18,7 @@ const diff_1 = require("./commands/diff");
 const checkout_1 = require("./commands/checkout");
 const sync_plan_1 = require("./commands/sync-plan");
 const hooks_1 = require("./commands/hooks");
+const sync_gitignore_1 = require("./commands/sync-gitignore");
 const program = new commander_1.Command();
 // Global CLI setup
 program
@@ -37,6 +38,7 @@ program.addCommand(diff_1.diffCommand);
 program.addCommand(checkout_1.checkoutCommand);
 program.addCommand(sync_plan_1.syncPlanCommand);
 program.addCommand(hooks_1.hooksCommand);
+program.addCommand(sync_gitignore_1.syncGitignoreCommand);
 // Global error handling
 program.exitOverride((err) => {
     if (err.code === 'commander.unknownCommand') {

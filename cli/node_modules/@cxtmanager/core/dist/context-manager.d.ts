@@ -13,6 +13,11 @@ export declare class ContextManager {
     isInitialized(): Promise<boolean>;
     status(): Promise<StatusInfo>;
     validate(quick?: boolean): Promise<HealthStatus>;
+    /**
+     * Sync .gitignore with track_in_git setting from config
+     * Call this after manually changing git_integration.track_in_git in .cxtconfig.json
+     */
+    syncGitignore(): Promise<void>;
     autoHeal(dryRun?: boolean): Promise<string[]>;
     loadConfig(): Promise<CxtConfig>;
     /**
