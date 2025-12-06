@@ -41,7 +41,7 @@ Provides the `cit` command with Git-like operations for managing project context
 ## Installation
 
 ```bash
-npm install -g cxtmanager-cli
+npm install -g @cxtmanager/cli
 ```
 
 ## Quick Start
