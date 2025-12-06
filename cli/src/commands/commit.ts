@@ -2,6 +2,7 @@ import { Command } from 'commander';
 import chalk from 'chalk';
 import inquirer from 'inquirer';
 import { ContextManager } from '@cxtmanager/core';
+import type { StatusInfo } from '@cxtmanager/core';
 
 export const commitCommand = new Command('commit')
   .description('Commit context file changes with smart prompts')
@@ -61,7 +62,8 @@ export const commitCommand = new Command('commit')
       }
 
       // Perform the commit
-      const gitRepo = (manager as any).gitRepo;
+      // Access gitRepo through the manager's internal property
+      const gitRepo = (manager as unknown as { gitRepo: { git: { commit: (message: string) => Promise<void>; add: (files: string[]) => Promise<void> } } }).gitRepo;
       await gitRepo.git.commit(message);
       
       console.log(chalk.green('✅ Committed changes successfully'));
@@ -70,13 +72,13 @@ export const commitCommand = new Command('commit')
       // Smart prompts for related files
       const status = await manager.status();
       const unstagedContextFiles = status.contextFiles
-        .filter(f => f.status === 'modified' && !f.staged)
-        .map(f => f.file);
+        .filter((f: StatusInfo['contextFiles'][number]) => f.status === 'modified' && !f.staged)
+        .map((f: StatusInfo['contextFiles'][number]) => f.file);
 
       if (unstagedContextFiles.length > 0) {
         console.log('');
         console.log(chalk.yellow('💡 Related files may need updates:'));
-        unstagedContextFiles.forEach(file => {
+        unstagedContextFiles.forEach((file: string) => {
           console.log(chalk.yellow(`   ${file} - consider updating based on your changes`));
         });
         
@@ -90,7 +92,7 @@ export const commitCommand = new Command('commit')
         ]);
         
         if (askStage.stage) {
-          await gitRepo.git.add(unstagedContextFiles.map(f => `.cxt/${f}`));
+          await gitRepo.git.add(unstagedContextFiles.map((f: string) => `.cxt/${f}`));
           const relatedMessage = `Update related context files
 
 Related to: ${message}`;
@@ -99,28 +101,29 @@ Related to: ${message}`;
         }
       }
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       // Handle specific error types with helpful messages
-      if (error.message.includes('Not a Git repository')) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      if (errorMessage.includes('Not a Git repository')) {
         console.error(chalk.red('❌ Not a Git repository'));
         console.log(chalk.yellow('💡 Run "git init" to initialize a Git repository'));
         console.log(chalk.yellow('💡 Or run "cit init" which will initialize Git automatically'));
-      } else if (error.message.includes('Permission denied') || error.message.includes('EACCES')) {
+      } else if (errorMessage.includes('Permission denied') || errorMessage.includes('EACCES')) {
         console.error(chalk.red('❌ Permission denied'));
         console.log(chalk.yellow('💡 Check file system permissions'));
         console.log(chalk.yellow('💡 Ensure you have write access to .git/ directory'));
-      } else if (error.message.includes('nothing to commit')) {
+      } else if (errorMessage.includes('nothing to commit')) {
         console.log(chalk.yellow('⚠️  Nothing to commit'));
         console.log(chalk.gray('💡 No changes staged for commit'));
         console.log(chalk.gray('💡 Use "cit add" to stage changes first'));
-      } else if (error.message.includes('no changes added to commit')) {
+      } else if (errorMessage.includes('no changes added to commit')) {
         console.log(chalk.yellow('⚠️  No changes staged for commit'));
         console.log(chalk.gray('💡 Use "cit add" to stage changes first'));
       } else {
-        console.error(chalk.red('❌ Commit failed:'), error.message);
+        console.error(chalk.red('❌ Commit failed:'), errorMessage);
       }
       
-      if (process.env.DEBUG) {
+      if (process.env.DEBUG && error instanceof Error) {
         console.error(error.stack);
       }
       process.exit(1);

@@ -5,9 +5,6 @@ import { ContextManager, GitHooksManager } from '@cxtmanager/core';
 
 export const hooksCommand = new Command('hooks')
   .description('Manage git hooks for CxtManager')
-  .command('install', 'Install git hooks')
-  .command('remove', 'Remove git hooks')
-  .command('status', 'Show hook installation status')
   .action(async () => {
     // Show help if no subcommand
     hooksCommand.help();

@@ -5,7 +5,8 @@ import ora from 'ora';
 import * as path from 'path';
 import { promises as fs } from 'fs';
 import { existsSync } from 'fs';
-import { ContextManager, InitOptions, GitHooksManager } from '@cxtmanager/core';
+import { ContextManager, GitHooksManager } from '@cxtmanager/core';
+import type { InitOptions } from '@cxtmanager/core';
 
 export const initCommand = new Command('init')
   .description('Initialize CxtManager in current project (like git init)')
