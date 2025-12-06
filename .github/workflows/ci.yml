@@ -20,6 +20,9 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20'
+          registry-url: 'https://registry.npmjs.org'
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v2
@@ -32,17 +35,17 @@ jobs:
       - name: Build packages
         run: |
           pnpm --filter @cxtmanager/core build
-          pnpm --filter cxtmanager-cli build
+          pnpm --filter @cxtmanager/cli build
 
       - name: Run tests
         run: |
           pnpm --filter @cxtmanager/core test
-          pnpm --filter cxtmanager-cli test
+          pnpm --filter @cxtmanager/cli test
 
       - name: Lint
         run: |
           pnpm --filter @cxtmanager/core lint || true
-          pnpm --filter cxtmanager-cli lint || true
+          pnpm --filter @cxtmanager/cli lint || true
 
       - name: Validate package.json for publishing
         run: |
@@ -58,10 +61,10 @@ jobs:
           
           # Check CLI package.json - it should have workspace: for development
           # but we'll validate the structure is correct
-          echo "Checking cxtmanager-cli package.json..."
+          echo "Checking @cxtmanager/cli package.json..."
           CLI_PKG=$(cat cli/package.json)
           if ! echo "$CLI_PKG" | grep -q '"@cxtmanager/core"' ; then
-            echo "❌ ERROR: cxtmanager-cli package.json missing @cxtmanager/core dependency"
+            echo "❌ ERROR: @cxtmanager/cli package.json missing @cxtmanager/core dependency"
             exit 1
           fi
           
@@ -82,13 +85,13 @@ jobs:
             }
             
             if (cliMissing.length > 0) {
-              console.error('❌ cxtmanager-cli missing required fields:', cliMissing.join(', '));
+              console.error('❌ @cxtmanager/cli missing required fields:', cliMissing.join(', '));
               process.exit(1);
             }
             
             // Check that CLI has bin field
             if (!cliPkg.bin) {
-              console.error('❌ cxtmanager-cli missing bin field');
+              console.error('❌ @cxtmanager/cli missing bin field');
               process.exit(1);
             }
             
@@ -169,7 +172,7 @@ jobs:
           cd ..
           
           # Test CLI package with updated dependency (simulating publish workflow)
-          echo "Testing cxtmanager-cli package..."
+          echo "Testing @cxtmanager/cli package..."
           CORE_VERSION=$(node -p "require('./core/package.json').version")
           
           # Temporarily update CLI dependency for testing
@@ -197,7 +200,7 @@ jobs:
           EOF
           
           if [ $PACK_EXIT -ne 0 ]; then
-            echo "❌ ERROR: Failed to pack cxtmanager-cli"
+            echo "❌ ERROR: Failed to pack @cxtmanager/cli"
             exit 1
           fi
           
@@ -216,11 +219,10 @@ jobs:
             exit 0
           fi
           
-          echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}" > .npmrc
-          
           # Test core package publish validation
           echo "Testing @cxtmanager/core publish validation..."
           cd core
+          echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}" > .npmrc
           CORE_VERSION=$(node -p "require('./package.json').version")
           CORE_NAME=$(node -p "require('./package.json').name")
           
@@ -253,8 +255,9 @@ jobs:
           EOF
           
           # Test CLI package publish validation
-          echo "Testing cxtmanager-cli publish validation..."
+          echo "Testing @cxtmanager/cli publish validation..."
           cd cli
+          echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}" > .npmrc
           CLI_VERSION=$(node -p "require('./package.json').version")
           CLI_NAME=$(node -p "require('./package.json').name")
           
@@ -266,7 +269,7 @@ jobs:
           fi
           
           # Test publish with --dry-run (validates everything except actual publish)
-          echo "Running npm publish --dry-run for cxtmanager-cli..."
+          echo "Running npm publish --dry-run for @cxtmanager/cli..."
           npm publish --dry-run --access public
           PUBLISH_EXIT=$?
           cd ..
@@ -281,7 +284,7 @@ jobs:
           EOF
           
           if [ $PUBLISH_EXIT -ne 0 ]; then
-            echo "❌ ERROR: npm publish --dry-run failed for cxtmanager-cli"
+            echo "❌ ERROR: npm publish --dry-run failed for @cxtmanager/cli"
             exit 1
           fi
           
