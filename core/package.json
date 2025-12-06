@@ -1,6 +1,6 @@
 {
   "name": "@cxtmanager/core",
-  "version": "1.0.0",
+  "version": "1.0.3",
   "description": "Core functionality for CxtManager - context file management and Git integration",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -14,7 +14,7 @@
     "test": "jest",
     "lint": "eslint src --ext .ts",
     "clean": "rm -rf dist",
-    "prepublishOnly": "pnpm build"
+    "prepublishOnly": "npm run build"
   },
   "dependencies": {
     "simple-git": "^3.27.0",
@@ -35,8 +35,8 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/cxtmanager/cxtmanager.git",
-    "directory": "cxt/core"
+    "url": "https://github.com/DigitalBrewLLC/cxt-manager.git",
+    "directory": "core"
   },
   "keywords": [
     "ai",
@@ -56,7 +56,8 @@
   },
   "homepage": "https://cxtmanager.dev",
   "bugs": {
-    "url": "https://github.com/cxtmanager/cxtmanager/issues",
+    "url": "https://github.com/DigitalBrewLLC/cxt-manager/issues",
     "email": "hello@digitalbrew.tech"
   }
-} 
+}
+

@@ -59,7 +59,7 @@ export const initCommand = new Command('init')
         mode = determineInitMode(options);
       }
 
-      const initOptions: InitOptions = {
+      const initOptions: InitOptions & { trackInGit?: boolean } = {
         mode
       };
 
@@ -211,7 +211,7 @@ export const initCommand = new Command('init')
       spinner.text = `Initializing with mode: ${mode}`;
 
       // Add trackInGit to init options
-      initOptions.trackInGit = trackAnswer.trackInGit;
+      (initOptions as any).trackInGit = trackAnswer.trackInGit;
 
       // Execute initialization
       await manager.init(initOptions);

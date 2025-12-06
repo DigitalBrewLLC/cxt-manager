@@ -15,7 +15,7 @@ export const syncGitignoreCommand = new Command('sync-gitignore')
       }
 
       console.log(chalk.cyan('🔄 Syncing .gitignore with configuration...'));
-      await manager.syncGitignore();
+      await (manager as any).syncGitignore();
       console.log(chalk.green('✅ .gitignore updated successfully'));
       console.log(chalk.gray('💡 If files were previously tracked, you may need to run: git rm --cached -r .cxt/'));
     } catch (error: any) {

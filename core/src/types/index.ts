@@ -45,17 +45,13 @@ export interface ContextFile {
   size: number;
 }
 
-enum InitMode {
-  AUTO = 'auto',
-  MANUAL = 'manual',
-}
-
 export interface InitOptions {
-  mode: InitMode;
+  mode: 'auto' | 'manual';
   template?: string;
   ai_model?: string;
   sources?: string[];
   deep_analysis?: boolean;
+  trackInGit?: boolean; // If false, adds .cxt/ to .gitignore for privacy (default: true)
 }
 
 export interface GitInfo {
