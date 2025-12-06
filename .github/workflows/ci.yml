@@ -173,7 +173,6 @@ EOF
           CORE_VERSION=$(node -p "require('./core/package.json').version")
           
           # Temporarily update CLI dependency for testing
-          CORE_VERSION=$(node -p "require('./core/package.json').version")
           node << EOF
             const fs = require('fs');
             const path = './cli/package.json';
