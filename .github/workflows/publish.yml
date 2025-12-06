@@ -4,11 +4,17 @@ on:
   push:
     branches:
       - main
-    paths:
-      - 'core/**'
-      - 'cli/**'
-      - 'package.json'
-      - '.github/workflows/publish.yml'
+  workflow_dispatch:
+    inputs:
+      version_type:
+        description: 'Version bump type (patch, minor, major)'
+        required: true
+        default: 'patch'
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
 
 jobs:
   publish:
@@ -35,6 +41,11 @@ jobs:
         with:
           version: 10
 
+      - name: Configure Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
@@ -43,25 +54,107 @@ jobs:
           pnpm --filter @cxtmanager/core build
           pnpm --filter cxtmanager-cli build
 
+      - name: Check for code changes
+        id: check-changes
+        run: |
+          # Skip if this is a release commit from standard-version (prevents infinite loop)
+          COMMIT_MSG=$(git log -1 --pretty=%B)
+          if echo "$COMMIT_MSG" | grep -qE '^chore\(release\)'; then
+            echo "has_code_changes=false" >> $GITHUB_OUTPUT
+            echo "Skipping - this is a release commit from standard-version"
+            exit 0
+          fi
+          
+          # Check if there are actual code changes (not just workflow/config files)
+          if git diff --name-only HEAD~1 HEAD | grep -E '^(core|cli)/' | grep -vE '\.(md|json)$' | grep -vE 'package\.json$' | head -1 > /dev/null; then
+            echo "has_code_changes=true" >> $GITHUB_OUTPUT
+          else
+            # Check if package.json files changed (version bumps from manual edits)
+            if git diff --name-only HEAD~1 HEAD | grep -E 'package\.json$' > /dev/null; then
+              echo "has_code_changes=true" >> $GITHUB_OUTPUT
+            else
+              echo "has_code_changes=false" >> $GITHUB_OUTPUT
+            fi
+          fi
+
       - name: Run tests
+        if: steps.check-changes.outputs.has_code_changes == 'true'
         run: |
           pnpm --filter @cxtmanager/core test
           pnpm --filter cxtmanager-cli test
 
-      - name: Check for version tag
-        id: check-tag
+      - name: Check if version already released
+        if: steps.check-changes.outputs.has_code_changes == 'true'
+        id: check-release
         run: |
-          # Check if this commit has a version tag (created by standard-version)
-          TAG=$(git describe --tags --exact-match HEAD 2>/dev/null || echo "")
-          if [ -n "$TAG" ]; then
-            echo "has_tag=true" >> $GITHUB_OUTPUT
-            echo "tag=$TAG" >> $GITHUB_OUTPUT
+          CURRENT_VERSION=$(node -p "require('./cli/package.json').version")
+          CURRENT_TAG="v${CURRENT_VERSION}"
+          
+          # Check if tag already exists (means this version was already released)
+          if git rev-parse "$CURRENT_TAG" >/dev/null 2>&1; then
+            echo "already_released=true" >> $GITHUB_OUTPUT
+            echo "Tag $CURRENT_TAG already exists - skipping version bump"
           else
-            echo "has_tag=false" >> $GITHUB_OUTPUT
+            echo "already_released=false" >> $GITHUB_OUTPUT
           fi
 
+      - name: Bump version and update changelog
+        if: steps.check-changes.outputs.has_code_changes == 'true' && steps.check-release.outputs.already_released == 'false'
+        run: |
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            # Manual trigger - use specified version type
+            VERSION_TYPE="${{ github.event.inputs.version_type }}"
+            if [ "$VERSION_TYPE" == "patch" ]; then
+              pnpm release:patch
+            elif [ "$VERSION_TYPE" == "minor" ]; then
+              pnpm release:minor
+            elif [ "$VERSION_TYPE" == "major" ]; then
+              pnpm release:major
+            fi
+          else
+            # Automatic trigger on PR merge - let standard-version determine bump from commits
+            pnpm release
+          fi
+          
+          # standard-version creates a commit and tag, now push them
+          git push origin main --follow-tags
+          
+          # Fetch the newly created tag so the workflow can see it
+          git fetch --tags
+
+      - name: Get current version and check status
+        if: steps.check-changes.outputs.has_code_changes == 'true'
+        id: version-check
+        run: |
+          CLI_VERSION=$(node -p "require('./cli/package.json').version")
+          CORE_VERSION=$(node -p "require('./core/package.json').version")
+          TAG="v${CLI_VERSION}"
+          
+          # Check if tag already exists (should exist if standard-version just ran)
+          if git rev-parse "$TAG" >/dev/null 2>&1; then
+            echo "tag_exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "tag_exists=false" >> $GITHUB_OUTPUT
+          fi
+          
+          # Check if packages are already published on npm
+          if npm view cxtmanager-cli@$CLI_VERSION version >/dev/null 2>&1; then
+            echo "cli_published=true" >> $GITHUB_OUTPUT
+          else
+            echo "cli_published=false" >> $GITHUB_OUTPUT
+          fi
+          
+          if npm view @cxtmanager/core@$CORE_VERSION version >/dev/null 2>&1; then
+            echo "core_published=true" >> $GITHUB_OUTPUT
+          else
+            echo "core_published=false" >> $GITHUB_OUTPUT
+          fi
+          
+          echo "tag=$TAG" >> $GITHUB_OUTPUT
+          echo "version=$CLI_VERSION" >> $GITHUB_OUTPUT
+
       - name: Publish @cxtmanager/core
-        if: steps.check-tag.outputs.has_tag == 'true'
+        if: steps.check-changes.outputs.has_code_changes == 'true' && steps.check-release.outputs.already_released == 'false' && steps.version-check.outputs.tag_exists == 'true' && steps.version-check.outputs.core_published == 'false'
         working-directory: ./core
         run: |
           VERSION=$(node -p "require('./package.json').version")
@@ -71,7 +164,7 @@ jobs:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Update CLI dependency
-        if: steps.check-tag.outputs.has_tag == 'true'
+        if: steps.check-changes.outputs.has_code_changes == 'true' && steps.check-release.outputs.already_released == 'false' && steps.version-check.outputs.tag_exists == 'true' && steps.version-check.outputs.core_published == 'false'
         run: |
           CORE_VERSION=$(node -p "require('./core/package.json').version")
           cd cli
@@ -81,7 +174,7 @@ jobs:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Publish cxtmanager-cli
-        if: steps.check-tag.outputs.has_tag == 'true'
+        if: steps.check-changes.outputs.has_code_changes == 'true' && steps.check-release.outputs.already_released == 'false' && steps.version-check.outputs.tag_exists == 'true' && steps.version-check.outputs.cli_published == 'false'
         working-directory: ./cli
         run: |
           VERSION=$(node -p "require('./package.json').version")
@@ -91,14 +184,15 @@ jobs:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Create GitHub Release
-        if: steps.check-tag.outputs.has_tag == 'true'
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        if: steps.check-changes.outputs.has_code_changes == 'true' && steps.check-release.outputs.already_released == 'false' && steps.version-check.outputs.tag_exists == 'true'
+        uses: softprops/action-gh-release@v1
         with:
-          tag_name: ${{ steps.check-tag.outputs.tag }}
-          release_name: Release ${{ steps.check-tag.outputs.tag }}
+          tag_name: ${{ steps.version-check.outputs.tag }}
+          name: Release ${{ steps.version-check.outputs.tag }}
           body_path: CHANGELOG.md
           draft: false
           prerelease: false
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
