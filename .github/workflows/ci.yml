@@ -51,7 +51,7 @@ jobs:
           # Check core package.json
           echo "Checking @cxtmanager/core package.json..."
           CORE_PKG=$(cat core/package.json)
-          if echo "$CORE_PKG" | grep -q '"workspace:'" ; then
+          if echo "$CORE_PKG" | grep -q "\"workspace:" ; then
             echo "❌ ERROR: @cxtmanager/core package.json contains workspace: protocol"
             exit 1
           fi
