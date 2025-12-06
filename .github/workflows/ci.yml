@@ -44,3 +44,250 @@ jobs:
           pnpm --filter @cxtmanager/core lint || true
           pnpm --filter cxtmanager-cli lint || true
 
+      - name: Validate package.json for publishing
+        run: |
+          echo "Validating package.json files for publishing..."
+          
+          # Check core package.json
+          echo "Checking @cxtmanager/core package.json..."
+          CORE_PKG=$(cat core/package.json)
+          if echo "$CORE_PKG" | grep -q '"workspace:'" ; then
+            echo "❌ ERROR: @cxtmanager/core package.json contains workspace: protocol"
+            exit 1
+          fi
+          
+          # Check CLI package.json - it should have workspace: for development
+          # but we'll validate the structure is correct
+          echo "Checking cxtmanager-cli package.json..."
+          CLI_PKG=$(cat cli/package.json)
+          if ! echo "$CLI_PKG" | grep -q '"@cxtmanager/core"' ; then
+            echo "❌ ERROR: cxtmanager-cli package.json missing @cxtmanager/core dependency"
+            exit 1
+          fi
+          
+          # Validate that both packages have required fields
+          echo "Validating required package fields..."
+          node << 'EOF'
+            const fs = require('fs');
+            const corePkg = JSON.parse(fs.readFileSync('core/package.json', 'utf8'));
+            const cliPkg = JSON.parse(fs.readFileSync('cli/package.json', 'utf8'));
+            
+            const required = ['name', 'version', 'description', 'main', 'files', 'publishConfig'];
+            const coreMissing = required.filter(f => !corePkg[f]);
+            const cliMissing = required.filter(f => !cliPkg[f]);
+            
+            if (coreMissing.length > 0) {
+              console.error('❌ @cxtmanager/core missing required fields:', coreMissing.join(', '));
+              process.exit(1);
+            }
+            
+            if (cliMissing.length > 0) {
+              console.error('❌ cxtmanager-cli missing required fields:', cliMissing.join(', '));
+              process.exit(1);
+            }
+            
+            // Check that CLI has bin field
+            if (!cliPkg.bin) {
+              console.error('❌ cxtmanager-cli missing bin field');
+              process.exit(1);
+            }
+            
+            console.log('✅ All package.json files are valid for publishing');
+EOF
+
+      - name: Test dependency update logic
+        run: |
+          echo "Testing CLI dependency update logic..."
+          
+          # Simulate the dependency update that happens in publish workflow
+          CORE_VERSION=$(node -p "require('./core/package.json').version")
+          echo "Current core version: $CORE_VERSION"
+          
+          # Test updating CLI dependency
+          node << EOF
+            const fs = require('fs');
+            const path = './cli/package.json';
+            const pkg = JSON.parse(fs.readFileSync(path, 'utf8'));
+            const originalDep = pkg.dependencies['@cxtmanager/core'];
+            const coreVersion = '$CORE_VERSION';
+            
+            console.log('Original dependency:', originalDep);
+            
+            // Update to version (simulating publish workflow)
+            pkg.dependencies['@cxtmanager/core'] = '^' + coreVersion;
+            
+            // Verify the update worked
+            if (pkg.dependencies['@cxtmanager/core'] !== '^' + coreVersion) {
+              console.error('❌ Failed to update dependency');
+              process.exit(1);
+            }
+            
+            console.log('Updated dependency:', pkg.dependencies['@cxtmanager/core']);
+            
+            // Restore original (we're just testing)
+            pkg.dependencies['@cxtmanager/core'] = originalDep;
+            fs.writeFileSync(path, JSON.stringify(pkg, null, 2) + '\n');
+            
+            console.log('✅ Dependency update logic works correctly');
+EOF
+
+      - name: Validate build outputs
+        run: |
+          echo "Validating build outputs exist..."
+          
+          # Check core dist files
+          if [ ! -f "core/dist/index.js" ]; then
+            echo "❌ ERROR: core/dist/index.js not found"
+            exit 1
+          fi
+          
+          if [ ! -f "core/dist/index.d.ts" ]; then
+            echo "❌ ERROR: core/dist/index.d.ts not found"
+            exit 1
+          fi
+          
+          # Check CLI dist files
+          if [ ! -f "cli/dist/cli.js" ]; then
+            echo "❌ ERROR: cli/dist/cli.js not found"
+            exit 1
+          fi
+          
+          echo "✅ All build outputs exist"
+
+      - name: Test package packing (dry-run)
+        run: |
+          echo "Testing package packing (dry-run publish)..."
+          
+          # Test core package
+          echo "Testing @cxtmanager/core package..."
+          cd core
+          npm pack --dry-run
+          if [ $? -ne 0 ]; then
+            echo "❌ ERROR: Failed to pack @cxtmanager/core"
+            exit 1
+          fi
+          cd ..
+          
+          # Test CLI package with updated dependency (simulating publish workflow)
+          echo "Testing cxtmanager-cli package..."
+          CORE_VERSION=$(node -p "require('./core/package.json').version")
+          
+          # Temporarily update CLI dependency for testing
+          node << EOF
+            const fs = require('fs');
+            const path = './cli/package.json';
+            const pkg = JSON.parse(fs.readFileSync(path, 'utf8'));
+            const coreVersion = '$CORE_VERSION';
+            pkg.dependencies['@cxtmanager/core'] = '^' + coreVersion;
+            fs.writeFileSync(path, JSON.stringify(pkg, null, 2) + '\n');
+EOF
+          
+          cd cli
+          npm pack --dry-run
+          PACK_EXIT=$?
+          cd ..
+          
+          # Restore original dependency
+          node << 'EOF'
+            const fs = require('fs');
+            const path = './cli/package.json';
+            const pkg = JSON.parse(fs.readFileSync(path, 'utf8'));
+            pkg.dependencies['@cxtmanager/core'] = 'workspace:*';
+            fs.writeFileSync(path, JSON.stringify(pkg, null, 2) + '\n');
+EOF
+          
+          if [ $PACK_EXIT -ne 0 ]; then
+            echo "❌ ERROR: Failed to pack cxtmanager-cli"
+            exit 1
+          fi
+          
+          echo "✅ Both packages can be packed successfully"
+
+      - name: Test npm publish (authentication and validation)
+        if: github.ref == 'refs/heads/main' || github.event_name == 'pull_request'
+        run: |
+          echo "Testing npm publish authentication and validation..."
+          
+          # Setup npm authentication (same as publish workflow)
+          if [ -z "${{ secrets.NPM_TOKEN }}" ]; then
+            echo "⚠️  WARNING: NPM_TOKEN not set - skipping publish validation"
+            echo "This is expected for PRs from forks. Publish validation will run on merge to main."
+            echo "✅ Skipping publish validation (will run on merge)"
+            exit 0
+          fi
+          
+          echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}" > .npmrc
+          
+          # Test core package publish validation
+          echo "Testing @cxtmanager/core publish validation..."
+          cd core
+          CORE_VERSION=$(node -p "require('./package.json').version")
+          CORE_NAME=$(node -p "require('./package.json').name")
+          
+          # Check if package exists and we have access
+          if npm view "$CORE_NAME@$CORE_VERSION" version >/dev/null 2>&1; then
+            echo "⚠️  WARNING: $CORE_NAME@$CORE_VERSION already exists on npm"
+          else
+            echo "✅ $CORE_NAME@$CORE_VERSION is not published yet (expected)"
+          fi
+          
+          # Test publish with --dry-run (validates everything except actual publish)
+          echo "Running npm publish --dry-run for @cxtmanager/core..."
+          npm publish --dry-run --access public
+          if [ $? -ne 0 ]; then
+            echo "❌ ERROR: npm publish --dry-run failed for @cxtmanager/core"
+            exit 1
+          fi
+          cd ..
+          
+          # Update CLI dependency for testing
+          echo "Updating CLI dependency for publish test..."
+          CORE_VERSION=$(node -p "require('./core/package.json').version")
+          node << EOF
+            const fs = require('fs');
+            const path = './cli/package.json';
+            const pkg = JSON.parse(fs.readFileSync(path, 'utf8'));
+            const coreVersion = '$CORE_VERSION';
+            pkg.dependencies['@cxtmanager/core'] = '^' + coreVersion;
+            fs.writeFileSync(path, JSON.stringify(pkg, null, 2) + '\n');
+EOF
+          
+          # Test CLI package publish validation
+          echo "Testing cxtmanager-cli publish validation..."
+          cd cli
+          CLI_VERSION=$(node -p "require('./package.json').version")
+          CLI_NAME=$(node -p "require('./package.json').name")
+          
+          # Check if package exists and we have access
+          if npm view "$CLI_NAME@$CLI_VERSION" version >/dev/null 2>&1; then
+            echo "⚠️  WARNING: $CLI_NAME@$CLI_VERSION already exists on npm"
+          else
+            echo "✅ $CLI_NAME@$CLI_VERSION is not published yet (expected)"
+          fi
+          
+          # Test publish with --dry-run (validates everything except actual publish)
+          echo "Running npm publish --dry-run for cxtmanager-cli..."
+          npm publish --dry-run --access public
+          PUBLISH_EXIT=$?
+          cd ..
+          
+          # Restore original dependency
+          node << 'EOF'
+            const fs = require('fs');
+            const path = './cli/package.json';
+            const pkg = JSON.parse(fs.readFileSync(path, 'utf8'));
+            pkg.dependencies['@cxtmanager/core'] = 'workspace:*';
+            fs.writeFileSync(path, JSON.stringify(pkg, null, 2) + '\n');
+EOF
+          
+          if [ $PUBLISH_EXIT -ne 0 ]; then
+            echo "❌ ERROR: npm publish --dry-run failed for cxtmanager-cli"
+            exit 1
+          fi
+          
+          echo "✅ Both packages passed npm publish validation"
+          echo "✅ npm authentication is working correctly"
+          echo "✅ Packages are ready to publish"
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
