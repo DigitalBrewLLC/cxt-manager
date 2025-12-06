@@ -227,7 +227,7 @@ jobs:
             const coreVersion = '$CORE_VERSION';
             pkg.dependencies['@cxtmanager/core'] = '^' + coreVersion;
             fs.writeFileSync(path, JSON.stringify(pkg, null, 2) + '\n');
-EOF
+          EOF
           
           # Verify the update
           echo "Updated CLI package.json dependency:"
