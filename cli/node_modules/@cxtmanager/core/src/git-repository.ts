@@ -26,8 +26,8 @@ export class GitRepository {
       console.log('📁 Initializing Git repository...');
       await this.git.init();
       
-      // Create .gitignore if it doesn't exist
-      await this.ensureGitignore();
+      // Create .gitignore if it doesn't exist (trackInGit will be set later)
+      await this.ensureGitignore(true);
     }
   }
 
@@ -283,7 +283,11 @@ export class GitRepository {
     }));
   }
 
-  private async ensureGitignore(): Promise<void> {
+  /**
+   * Ensure .gitignore exists and configure .cxt/ tracking
+   * @param trackInGit - If false, adds .cxt/ to .gitignore for privacy (default: true)
+   */
+  async ensureGitignore(trackInGit: boolean = true): Promise<void> {
     const gitignorePath = path.join(this.projectRoot, '.gitignore');
     
     // Default .gitignore content for CxtManager projects
@@ -307,18 +311,43 @@ build/
 .DS_Store
 Thumbs.db
 
-# CxtManager: Track .cxt/ folder - this is important!
-# .cxt/ folder should be committed to share context with team
+${trackInGit ? '# CxtManager: Track .cxt/ folder - this is important!\n# .cxt/ folder should be committed to share context with team' : '# CxtManager: .cxt/ folder is private (not tracked in Git)\n.cxt/'}
 `;
 
     if (!await fs.pathExists(gitignorePath)) {
       await fs.writeFile(gitignorePath, defaultGitignore);
     } else {
-      // Check if .cxt/ is already in gitignore and warn if it is
       const gitignore = await fs.readFile(gitignorePath, 'utf-8');
-      if (gitignore.includes('.cxt/') || gitignore.includes('.cxt')) {
-        console.warn('⚠️  Warning: .cxt/ folder appears to be in .gitignore');
-        console.warn('   CxtManager context should be tracked in Git for team sharing');
+      const hasCxtIgnore = gitignore.includes('.cxt/') || gitignore.includes('.cxt');
+      
+      if (trackInGit && hasCxtIgnore) {
+        // Remove .cxt/ from gitignore if it exists (only CxtManager entries)
+        const lines = gitignore.split('\n');
+        const updated = lines
+          .filter((line, index) => {
+            // Remove lines that are .cxt/ or .cxt (with or without comment)
+            const trimmed = line.trim();
+            if (trimmed === '.cxt/' || trimmed === '.cxt' || trimmed.startsWith('.cxt/') || trimmed.startsWith('.cxt ')) {
+              // Also remove preceding CxtManager comment if present
+              if (index > 0 && lines[index - 1].includes('CxtManager')) {
+                return false; // Remove comment line too
+              }
+              return false;
+            }
+            // Remove CxtManager comment lines about .cxt/
+            if (trimmed.includes('CxtManager') && (trimmed.includes('.cxt/') || trimmed.includes('.cxt'))) {
+              return false;
+            }
+            return true;
+          })
+          .join('\n');
+        await fs.writeFile(gitignorePath, updated);
+        console.log('✅ Removed .cxt/ from .gitignore (context will be tracked in Git)');
+      } else if (!trackInGit && !hasCxtIgnore) {
+        // Add .cxt/ to gitignore
+        const updated = gitignore.trim() + '\n\n# CxtManager: .cxt/ folder is private (not tracked in Git)\n.cxt/\n';
+        await fs.writeFile(gitignorePath, updated);
+        console.log('✅ Added .cxt/ to .gitignore (context will remain private)');
       }
     }
   }

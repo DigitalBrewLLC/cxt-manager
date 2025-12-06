@@ -1,110 +1,216 @@
-# CxtManager Packages
+# CxtManager
 
-## Project Purpose
+**"Stop being the context monkey. Manage your AI project context like code."**
 
-CxtManager eliminates the **"context monkey" problem** in AI-assisted development by providing local context file management. It gives developers the `cit` CLI with Git-like commands for managing a `.cxt/` folder containing project context that AI coding assistants can reference to understand project goals, decisions, and constraints.
+Git for AI Context - Version control for your AI coding assistant's project memory.
+
+## The Problem
+
+Every time you start a new chat with your AI coding assistant, you're the "context monkey":
+- Re-explaining what your project does
+- Repeating architectural decisions
+- Restating constraints and requirements
+- Watching your AI forget everything between sessions
+
+**Your AI has no memory. Your project does. This is the gap CxtManager fills.**
+
+## The Solution
+
+CxtManager gives you `cit` - a Git-like CLI for managing a `.cxt/` folder that your AI can reference. Three files, one source of truth:
+```
+.cxt/
+├── context.md    # What your project is (stable truth)
+├── plan.md       # What you're building (branch-specific)
+└── guardrail.md  # What rules to follow (universal constraints)
+```
+
+Now your AI assistant can:
+- ✅ Reference project goals without asking
+- ✅ Stay aligned with architectural decisions
+- ✅ Follow project-specific constraints
+- ✅ Pick up where the last conversation left off
+
+## Quick Start
+
+### Installation
+```bash
+npm install -g cxtmanager-cli
+```
+
+### Initialize Your Project
+```bash
+# In any project directory
+cit init
+
+# Interactive setup asks:
+# 1. Template style (minimal/detailed/manual)
+# 2. Git hooks installation (auto-switch plan.md on branch changes)
+# 3. Update mode (manual/auto)
+# 4. Privacy & Git tracking (tracked/private)
+
+# Your .cxt/ files are created - fill them with your AI's help
+# Then reference them in any AI conversation
+```
+
+### Privacy Options
+
+**During `cit init`, `.gitignore` is automatically configured based on your choice.**
+
+By default, `.cxt/` files are tracked in Git for team sharing. During `cit init`, you can choose to keep context files private, and CxtManager will automatically add `.cxt/` to `.gitignore` for you. This is useful for:
+- Personal projects with sensitive context
+- Projects where context should remain local
+- Privacy-sensitive development workflows
+
+**To change this setting after initialization:**
+1. Edit `.cxt/.cxtconfig.json` and set `git_integration.track_in_git` to `false` (or `true`)
+2. Run `cit sync-gitignore` to apply the change to `.gitignore`
+
+**Or manually edit `.gitignore`:**
+- To make private: Add `.cxt/` to `.gitignore`
+- To make shared: Remove `.cxt/` from `.gitignore`
+
+**Note:** If files are already tracked in Git, you may need to manually remove them with `git rm --cached -r .cxt/` before adding to `.gitignore`.
+
+### Basic Workflow
+```bash
+cit status          # Check context file status and alignment
+cit add context.md  # Stage context changes
+cit commit "Updated project goals"  # Commit with message
+cit log             # View context change history
+```
 
 ## Core Philosophy
 
 **CxtManager is a Manager, not an Enforcer.**
 
-CxtManager provides structure and tools for managing AI project context, but it never enforces what content goes into your context files. You (and your AI tools) decide what to write. CxtManager simply helps you organize, version, and maintain consistency.
+We provide structure and Git-like version control for your context files. You decide what goes in them. Your AI helps you write them. CxtManager keeps them organized, versioned, and aligned.
 
-### 🎯 Core Principle: Context File Alignment
+### The Alignment Principle
 
-**The fundamental principle of CxtManager is that all context files must remain aligned and cross-referenced at all times.** This ensures that AI assistants and developers always have a consistent, unified understanding of:
+**All context files must tell the same story.** When context.md, plan.md, and guardrail.md are aligned:
+- AI suggestions stay consistent across conversations
+- Decisions align with project goals and constraints
+- Documentation stays in sync with code
+- New team members get accurate project understanding
 
-- **What the project is** (context.md)
-- **What's been done and what needs to be done** (plan.md)
-- **What rules and constraints to follow** (guardrail.md)
+This isn't just a feature - it's the foundation of reliable AI-assisted development.
 
-**When context files tell the same story, AI assistants can:**
-- Provide consistent suggestions across different conversations
-- Make decisions aligned with project goals and constraints
-- Update documentation that stays in sync with code changes
-- Help onboard new team members with accurate project understanding
-
-**This is not just a feature of CxtManager - it IS CxtManager's core philosophy.**
-
-### The Problem We Solve
-
-**Current Developer Pain:**
-- AI coding assistants lack project memory between sessions
-- Project context scattered across different AI conversations
-- No shared understanding of goals, architecture, and constraints
-- Context drift as projects evolve over time
-- Time wasted re-explaining project details to AI tools
-
-**The Solution: Local Context Management**
-- Centralized context files in `.cxt/` folder
-- Git-like commands for versioning context
-- Branch-aware context management (plan.md switches with Git branches)
-- Automatic alignment checking and warnings
-- Offline-first, Git-first architecture
-
-### Core Architecture
-
-**3-File Core:**
-- `context.md` - High-level project truth (stable, cross-referenced)
-- `plan.md` - Feature-specific implementation (branch-specific)
-- `guardrail.md` - Universal constraints and rules
-
-**Key Principles:**
-1. **Context Alignment** - All context files must tell the same story
-2. **Git-First Design** - Leverages existing Git infrastructure
-3. **Offline-First** - Core functionality works without internet
-4. **Manager not Enforcer** - Provides structure, you fill content
-5. **Branch Awareness** - `plan.md` content switches with Git branches
-
-## Key Value Propositions
-
-1. **"Git for AI Context"** - Familiar, trustworthy version control for project context
-2. **Offline-First** - Works completely locally, no external dependencies
-3. **AI Accessible** - Context files that your coding assistant can reference anytime
-4. **Version Controlled** - Track how project understanding evolves over time
-5. **Team Friendly** - Share context through Git like you share code
-6. **Simple Like Git** - Basic commands for powerful context management
-
-## Target Users
+## Who It's For
 
 ### Primary: AI-Assisted Developers
-- Use AI coding assistants (Cursor, Copilot, Claude, etc.) in their development workflow
-- Want their AI assistant to understand project context without manual explanation
-- Need reliable version control for project context and decisions
-- Value simple, Git-like workflows for context management
-- Work on projects that evolve over weeks/months and need persistent context
+You use tools like Cursor, Copilot, or Claude for coding. You want them to understand your project without constant re-explanation.
 
 ### Secondary: Development Teams
-- Teams where multiple developers use AI coding assistants
-- Need shared understanding of project goals and constraints across the team
-- Want to track how project context and decisions evolve over time
-- Require consistent context across team members' AI interactions
+Multiple developers using AI assistants need shared context. Track how project understanding evolves. Onboard new team members faster.
 
-## Technical Philosophy
+### Already Using Markdown Files?
+If you maintain `PROJECT.md`, `ARCHITECTURE.md`, `NOTES.md`, or similar files, CxtManager enhances your existing workflow:
 
-### Git-First Design
-- **Familiar commands** - Uses standard Git patterns developers already know
-- **Local operation** - Works completely offline, no cloud dependencies
-- **Reliable history** - Full audit trail of all context changes
-- **Standard workflows** - Integrates with existing Git repositories
-- **Branch support** - Experimental contexts, team collaboration
+**You're already documenting in markdown. We add version control and structure:**
+```
+Before: PROJECT.md, ARCHITECTURE.md, NOTES.md, TODO.md
+        (Scattered, unversioned, hard to keep aligned)
 
-### Simplicity Focus
-- **Minimal dependencies** - Core Node.js and Git only
-- **Standard file formats** - Markdown files, JSON configuration
-- **No external services** - Pure local file and Git operations
-- **Clear separation** - Context management separate from AI intelligence
-- **Open architecture** - Framework-agnostic core library
+After:  .cxt/context.md, .cxt/plan.md, .cxt/guardrail.md
+        (Structured, versioned with cit commit/cit log, validated, AI-accessible)
+```
 
-## Package Structure
+You version control your code. Why not version control your project context the same way?
 
-### `@cxtmanager/core`
-Core library providing context file management, Git integration, validation, and branch-aware plan management. Framework-agnostic and reusable.
+## How It Works
 
-### `cxtmanager-cli`
-Command-line interface (`cit` command) built on top of `@cxtmanager/core`. Provides Git-like commands for managing context files.
+CxtManager uses familiar Git-like commands to version control your project context. The `.cxt/` folder contains three structured files:
+
+- **context.md** - Your project's stable truth (what it does, why it exists, architecture)
+- **plan.md** - Your implementation plan (branch-specific, switches with Git branches)
+- **guardrail.md** - Universal constraints (rules, technology choices, things to avoid)
+
+### Core Commands
+
+```bash
+# Check status and alignment
+$ cit status
+
+Changes not staged for commit:
+  modified: context.md
+  modified: plan.md
+
+⚠️  Alignment warning: plan.md may need updates due to context.md changes
+✅ All context files are aligned
+```
+
+```bash
+# Stage and commit context changes
+cit add context.md
+cit commit "Updated project goals"
+
+✅ Committed changes to context.md
+💡 Consider updating: plan.md (references old goals)
+```
+
+```bash
+# View context history
+cit log
+
+commit abc123 (HEAD -> main)
+Author: Developer <dev@example.com>
+Date:   Mon Jan 15 10:30:00 2025
+    Updated project goals
+
+commit def456
+Author: AI Assistant
+Date:   Mon Jan 15 09:15:00 2025
+    AI: Updated plan with auth implementation
+```
+
+```bash
+# See what changed
+cit diff
+
+diff --git a/.cxt/context.md b/.cxt/context.md
+index 1234567..abcdefg
+--- a/.cxt/context.md
++++ b/.cxt/context.md
+@@ -5,6 +5,7 @@
+ The project is a SaaS platform for...
++New focus: Mobile-first design approach
+```
+
+```bash
+# Validate alignment
+cit validate
+
+✅ All context files are aligned
+⚠️  Warning: plan.md has 45% template content (consider updating)
+✅ Cross-references are consistent
+```
+
+```bash
+# Revert to previous state
+cit checkout abc123
+
+✅ Restored context files to commit abc123
+```
+
+All files are version controlled, validated for alignment, and easily accessible to AI tools.
+
+## Key Benefits
+
+1. **"Git for AI Context"** - Version control you already trust, for context
+2. **Offline-First** - No external services, works anywhere
+3. **AI Accessible** - Files your coding assistant can reference instantly
+4. **Team Friendly** - Share context through Git like you share code (or keep it private)
+5. **Simple** - If you know Git, you know CxtManager
 
 ## Development
+
+This is a monorepo containing:
+
+### `@cxtmanager/core`
+Framework-agnostic library for context management, Git integration, and validation.
+
+### `cxtmanager-cli`
+The `cit` command-line tool built on `@cxtmanager/core`.
 
 ```bash
 # Install dependencies
@@ -116,15 +222,30 @@ pnpm build
 # Run tests
 pnpm test
 
-# Run CLI from source
-cd cxt/cli && npm run dev
+# Develop CLI (watch mode)
+cd core && pnpm dev
+cd ../cli && pnpm dev
 ```
+
+See individual package READMEs for more details:
+- [`core/README.md`](core/README.md) - Core library documentation
+- [`cli/README.md`](cli/README.md) - CLI tool documentation
 
 ## Publishing
 
-Packages are published independently:
-- `@cxtmanager/core` - Core library (npm)
-- `cxtmanager-cli` - CLI tool (npm)
+Packages are published independently to npm:
+- `@cxtmanager/core` - Core library
+- `cxtmanager-cli` - CLI tool
 
-See individual package READMEs for more details.
+## Links
 
+- **Website:** [cxtmanager.dev](https://cxtmanager.dev)
+- **Documentation:** [cxtmanager.dev/docs](https://cxtmanager.dev/docs)
+- **GitHub:** [github.com/cxtmanager/cxtmanager](https://github.com/cxtmanager/cxtmanager)
+- **Support:** hello@digitalbrew.tech
+
+## License
+
+AGPL-3.0 - Open source for personal and open source projects. Commercial licenses available for proprietary use.
+
+**Built by:** [Digital Brew LLC](https://www.digitalbrew.tech)

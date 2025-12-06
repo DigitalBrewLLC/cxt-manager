@@ -167,8 +167,51 @@ export const initCommand = new Command('init')
       console.log(chalk.gray('  💡 You can change this later in .cxt/.cxtconfig.json'));
       console.log('');
 
+      // Question 4: Track in Git
+      console.log('');
+      console.log(chalk.bold('🔒 Privacy & Git Tracking'));
+      console.log('');
+      console.log('  Should .cxt/ folder be tracked in Git?');
+      console.log('');
+      console.log('  • Tracked (Recommended): Share context with team via Git');
+      console.log('  • Private: Keep context local, add .cxt/ to .gitignore');
+      console.log('');
+      const trackAnswer = await inquirer.prompt([
+        {
+          type: 'list',
+          name: 'trackInGit',
+          message: 'Choose an option:',
+          choices: [
+            {
+              name: '1) Tracked (Recommended) - Share context with team',
+              value: true,
+              short: 'Tracked'
+            },
+            {
+              name: '2) Private - Keep context local only',
+              value: false,
+              short: 'Private'
+            }
+          ],
+          default: 0
+        }
+      ]);
+      console.log('');
+      
+      if (trackAnswer.trackInGit) {
+        console.log(chalk.gray('  💡 Context files will be committed to Git for team sharing'));
+      } else {
+        console.log(chalk.gray('  💡 Context files will be added to .gitignore (private)'));
+      }
+      console.log('');
+      console.log(chalk.gray('  💡 You can change this later in .cxt/.cxtconfig.json'));
+      console.log('');
+
       const spinner = ora('Initializing CxtManager...').start();
       spinner.text = `Initializing with mode: ${mode}`;
+
+      // Add trackInGit to init options
+      initOptions.trackInGit = trackAnswer.trackInGit;
 
       // Execute initialization
       await manager.init(initOptions);
