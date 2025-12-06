@@ -100,8 +100,52 @@ jobs:
             echo "already_released=false" >> $GITHUB_OUTPUT
           fi
 
-      - name: Bump version and update changelog
+      - name: Check if standard-version was already run
         if: steps.check-changes.outputs.has_code_changes == 'true' && steps.check-release.outputs.already_released == 'false'
+        id: check-standard-version
+        run: |
+          CURRENT_VERSION=$(node -p "require('./cli/package.json').version")
+          CURRENT_TAG="v${CURRENT_VERSION}"
+          
+          # Check if this commit is from standard-version (has "chore(release)" in message)
+          COMMIT_MSG=$(git log -1 --pretty=%B)
+          if echo "$COMMIT_MSG" | grep -qE '^chore\(release\)'; then
+            echo "standard_version_run=true" >> $GITHUB_OUTPUT
+            echo "Commit message indicates standard-version was already run"
+          # Check if changelog already has this version entry (standard-version was run locally)
+          elif grep -qE "^### \[$CURRENT_VERSION\]|^### $CURRENT_VERSION" CHANGELOG.md 2>/dev/null; then
+            echo "standard_version_run=true" >> $GITHUB_OUTPUT
+            echo "Changelog already has $CURRENT_VERSION entry - standard-version was run locally"
+          else
+            echo "standard_version_run=false" >> $GITHUB_OUTPUT
+            echo "Changelog doesn't have $CURRENT_VERSION entry - will run standard-version"
+          fi
+
+      - name: Create tag if standard-version was run locally
+        if: steps.check-changes.outputs.has_code_changes == 'true' && steps.check-release.outputs.already_released == 'false' && steps.check-standard-version.outputs.standard_version_run == 'true'
+        run: |
+          CURRENT_VERSION=$(node -p "require('./cli/package.json').version")
+          CURRENT_TAG="v${CURRENT_VERSION}"
+          
+          echo "standard-version was already run (version $CURRENT_VERSION in changelog)"
+          echo "Creating tag $CURRENT_TAG without running standard-version again"
+          
+          # Create tag and commit if package.json/changelog changed
+          if git diff --name-only HEAD~1 HEAD | grep -qE '(package\.json|CHANGELOG\.md)'; then
+            # Changes are already committed, just create tag
+            git tag -a "$CURRENT_TAG" -m "Release $CURRENT_TAG"
+          else
+            # Need to commit the version bump
+            git add package.json cli/package.json core/package.json CHANGELOG.md
+            git commit -m "chore(release): $CURRENT_VERSION" || true
+            git tag -a "$CURRENT_TAG" -m "Release $CURRENT_TAG"
+          fi
+          
+          git push origin main --follow-tags
+          git fetch --tags
+
+      - name: Bump version and update changelog
+        if: steps.check-changes.outputs.has_code_changes == 'true' && steps.check-release.outputs.already_released == 'false' && steps.check-standard-version.outputs.standard_version_run == 'false'
         run: |
           if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
             # Manual trigger - use specified version type
