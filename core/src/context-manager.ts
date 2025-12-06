@@ -59,6 +59,10 @@ export class ContextManager {
 
     // Create configuration
     await this.createConfig(options);
+    
+    // Configure .gitignore based on trackInGit setting
+    const trackInGit = options.trackInGit !== false; // Default to true
+    await this.gitRepo.ensureGitignore(trackInGit);
 
     // Generate content based on mode
     switch (options.mode) {
@@ -72,12 +76,15 @@ export class ContextManager {
         await this.createBasicContent(analysis);
     }
 
-    // Initial Git commit
-    await this.gitRepo.addAndCommit(
-      ['.cxt/'],
-      `feat: initialize CxtManager with ${options.mode} mode\n\nCreated context files: context.md, plan.md, guardrail.md`,
-      'CxtManager Init'
-    );
+    // Initial Git commit (only if tracking in Git)
+    const trackInGit = options.trackInGit !== false; // Default to true
+    if (trackInGit) {
+      await this.gitRepo.addAndCommit(
+        ['.cxt/'],
+        `feat: initialize CxtManager with ${options.mode} mode\n\nCreated context files: context.md, plan.md, guardrail.md`,
+        'CxtManager Init'
+      );
+    }
   }
 
   async isInitialized(): Promise<boolean> {
@@ -118,6 +125,20 @@ export class ContextManager {
     this.validationEngine = new ValidationEngine(this.cxtPath, thresholds);
 
     return await this.validationEngine.checkHealth(quick);
+  }
+
+  /**
+   * Sync .gitignore with track_in_git setting from config
+   * Call this after manually changing git_integration.track_in_git in .cxtconfig.json
+   */
+  async syncGitignore(): Promise<void> {
+    if (!await this.isInitialized()) {
+      throw new Error('CxtManager not initialized');
+    }
+
+    const config = await this.loadConfig();
+    const trackInGit = config.git_integration?.track_in_git !== false; // Default to true
+    await this.gitRepo.ensureGitignore(trackInGit);
   }
 
   async autoHeal(dryRun: boolean = false): Promise<string[]> {
@@ -515,6 +536,8 @@ ${projectDescription}
   }
 
   private async createConfig(options: InitOptions): Promise<void> {
+    const trackInGit = options.trackInGit !== false; // Default to true
+    
     const config: CxtConfig = {
       version: '1.0.0',
       mode: options.mode,
@@ -526,7 +549,8 @@ ${projectDescription}
           post_merge: 'auto-heal'
         },
         silent_mode: true,
-        auto_install_hooks: true // MVP: Auto-install hooks on init
+        auto_install_hooks: true, // MVP: Auto-install hooks on init
+        track_in_git: trackInGit
       },
       plan_management: {
         backup_on_switch: true,

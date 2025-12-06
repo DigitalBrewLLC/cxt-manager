@@ -15,6 +15,7 @@ import { diffCommand } from './commands/diff';
 import { checkoutCommand } from './commands/checkout';
 import { syncPlanCommand } from './commands/sync-plan';
 import { hooksCommand } from './commands/hooks';
+import { syncGitignoreCommand } from './commands/sync-gitignore';
 
 const program = new Command();
 
@@ -37,6 +38,7 @@ program.addCommand(diffCommand);
 program.addCommand(checkoutCommand);
 program.addCommand(syncPlanCommand);
 program.addCommand(hooksCommand);
+program.addCommand(syncGitignoreCommand);
 
 // Global error handling
 program.exitOverride((err) => {

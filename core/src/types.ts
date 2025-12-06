@@ -14,6 +14,7 @@ export interface GitIntegrationConfig {
   };
   silent_mode: boolean;
   auto_install_hooks: boolean;
+  track_in_git?: boolean; // If false, adds .cxt/ to .gitignore for privacy (default: true)
 }
 
 export interface TemplateThresholds {
@@ -100,6 +101,7 @@ export interface ContextFile {
 
 export interface InitOptions {
   mode: 'auto' | 'manual';
+  trackInGit?: boolean; // If false, adds .cxt/ to .gitignore for privacy (default: true)
 }
 
 export interface GitInfo {
