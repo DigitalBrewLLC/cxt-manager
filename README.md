@@ -14,7 +14,7 @@ Git for AI Context - Version control for your AI coding assistant's project memo
 
 ## Status: Alpha (v1.0.x)
 
-Currently validating core concepts and architecture with real-world projects. Documentation website will launch soon at CxtManager.dev.
+Currently validating core concepts and architecture with real-world projects. Documentation website will launch soon at [cxtmanager.dev/cli-docs](https://cxtmanager.dev/cli-docs).
 
 Follow development: [Issues](https://github.com/DigitalBrewLLC/cxt-manager/issues) | [Discussions](https://github.com/DigitalBrewLLC/cxt-manager/discussions)
 
@@ -261,10 +261,9 @@ Packages are published independently to npm:
 
 ## Links
 
-- **Website:** [cxtmanager.dev](https://cxtmanager.dev)
-- **Documentation:** [cxtmanager.dev/docs](https://cxtmanager.dev/docs)
+- **Documentation:** [cxtmanager.dev/cli-docs](https://cxtmanager.dev/cli-docs)
 - **GitHub:** [github.com/DigitalBrewLLC/cxt-manager](https://github.com/DigitalBrewLLC/cxt-manager)
-- **Support:** hello@digitalbrew.tech
+- **Support:** [GitHub Issues](https://github.com/DigitalBrewLLC/cxt-manager/issues)
 
 ## License
 
