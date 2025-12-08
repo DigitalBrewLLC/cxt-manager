@@ -55,7 +55,7 @@
     "command-line"
   ],
   "author": "Digital Brew LLC <hello@digitalbrew.tech>",
-  "license": "AGPL-3.0",
+  "license": "MIT",
   "engines": {
     "node": ">=18.0.0"
   },
