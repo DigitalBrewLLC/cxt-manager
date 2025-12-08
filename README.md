@@ -4,6 +4,22 @@
 
 Git for AI Context - Version control for your AI coding assistant's project memory.
 
+> ⚠️ **Active Development**: CxtManager is under heavy development.
+>
+> APIs will change. Architecture is being refined.
+>
+> **Not accepting contributions yet** - but watch this space!
+>
+> Star the repo to follow progress.
+
+## Status: Alpha (v1.0.x)
+
+Currently validating core concepts and architecture with real-world projects. Documentation website will launch soon at CxtManager.dev.
+
+Follow development: [Issues](https://github.com/DigitalBrewLLC/cxt-manager/issues) | [Discussions](https://github.com/DigitalBrewLLC/cxt-manager/discussions)
+
+---
+
 ## The Problem
 
 Every time you start a new chat with your AI coding assistant, you're the "context monkey":
@@ -252,6 +268,8 @@ Packages are published independently to npm:
 
 ## License
 
-AGPL-3.0 - Open source for personal and open source projects. Commercial licenses available for proprietary use.
+MIT License
+
+Copyright (c) 2025 Digital Brew LLC
 
 **Built by:** [Digital Brew LLC](https://www.digitalbrew.tech)
