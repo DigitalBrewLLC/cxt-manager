@@ -56,11 +56,11 @@ export class GitHooksManager {
     if (await fs.pathExists(hookPath)) {
       const existingContent = await fs.readFile(hookPath, 'utf-8');
       
-      // If it's already a CxtManager hook, replace it
-      if (existingContent.includes('CxtManager')) {
-        // Replace existing CxtManager hook
+      // If it's already a cxt-manager hook, replace it
+      if (existingContent.includes('cxt-manager')) {
+        // Replace existing cxt-manager hook
       } else {
-        // Existing hook from another tool - append CxtManager hook
+        // Existing hook from another tool - append cxt-manager hook
         // This allows multiple tools to coexist
         const newScript = this.getHookScript(hookName, command, isWindows);
         const combinedScript = `${existingContent}\n\n${newScript}`;
@@ -86,7 +86,7 @@ export class GitHooksManager {
   }
 
   /**
-   * Remove all CxtManager hooks
+   * Remove all cxt-manager hooks
    */
   async removeHooks(): Promise<void> {
     const hooks = ['post-checkout', 'pre-commit', 'post-merge'];
@@ -97,8 +97,8 @@ export class GitHooksManager {
       if (await fs.pathExists(hookPath)) {
         const content = await fs.readFile(hookPath, 'utf-8');
         
-        // Only remove if it's a CxtManager hook
-        if (content.includes('CxtManager')) {
+        // Only remove if it's a cxt-manager hook
+        if (content.includes('cxt-manager')) {
           await fs.remove(hookPath);
         }
       }
@@ -129,7 +129,7 @@ export class GitHooksManager {
       }
       
       const content = await fs.readFile(hookPath, 'utf-8');
-      if (!content.includes('CxtManager')) {
+      if (!content.includes('cxt-manager')) {
         return false;
       }
     }
@@ -149,7 +149,7 @@ export class GitHooksManager {
       
       if (await fs.pathExists(hookPath)) {
         const content = await fs.readFile(hookPath, 'utf-8');
-        if (content.includes('CxtManager')) {
+        if (content.includes('cxt-manager')) {
           installed.push(hookName);
         }
       }
@@ -164,12 +164,11 @@ export class GitHooksManager {
   private getBashHookScript(hookName: string, command: string): string {
     const silentFlag = this.config.git_integration?.silent_mode ? '--silent' : '';
     const commandWithFlags = command.includes('validate') ? `${command} --quick ${silentFlag}` :
-                            command.includes('auto-heal') ? `${command} --if-needed ${silentFlag}` :
                             `${command} ${silentFlag}`;
     
     return `#!/bin/sh
-# CxtManager: ${hookName} hook
-# This hook was installed by CxtManager (cit init)
+# cxt-manager: ${hookName} hook
+# This hook was installed by cxt-manager (cit init)
 # To remove: cit hooks remove
 
 # Check if cit is available (don't fail if not in PATH)
@@ -186,12 +185,11 @@ exit 0
   private getPowerShellHookScript(hookName: string, command: string): string {
     const silentFlag = this.config.git_integration?.silent_mode ? '--silent' : '';
     const commandWithFlags = command.includes('validate') ? `${command} --quick ${silentFlag}` :
-                            command.includes('auto-heal') ? `${command} --if-needed ${silentFlag}` :
                             `${command} ${silentFlag}`;
     
     return `#!/usr/bin/env pwsh
-# CxtManager: ${hookName} hook
-# This hook was installed by CxtManager (cit init)
+# cxt-manager: ${hookName} hook
+# This hook was installed by cxt-manager (cit init)
 # To remove: cit hooks remove
 
 # Check if cit is available (don't fail if not in PATH)

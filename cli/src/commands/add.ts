@@ -10,7 +10,7 @@ export const addCommand = new Command('add')
       const manager = new ContextManager();
       
       if (!await manager.isInitialized()) {
-        console.log(chalk.red('❌ CxtManager not initialized'));
+        console.log(chalk.red('❌ cxt-manager not initialized'));
         console.log(chalk.yellow('💡 Run "cit init" to get started'));
         return;
       }

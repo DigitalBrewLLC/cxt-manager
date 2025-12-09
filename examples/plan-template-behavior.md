@@ -87,7 +87,7 @@ Creates `plan.md` with structured sections and guidance:
 {
   "mode": "blank",
   "plan_management": {
-    "plan_template_style": undefined
+    "backup_on_switch": true
   }
 }
 ```

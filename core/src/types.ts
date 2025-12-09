@@ -1,8 +1,9 @@
 export interface PlanManagementConfig {
   backup_on_switch: boolean;
   plan_template_style?: PlanTemplateStyle; // Override init mode for plan.md (defaults to config.mode)
-  auto_commit_ai_changes: boolean;
-  archive_completed: boolean;
+  // Deprecated/Unused:
+  // auto_commit_ai_changes: Removed - conflicts with "Manager, not Enforcer" philosophy
+  // archive_completed: Removed - not implemented
 }
 
 export interface GitIntegrationConfig {
@@ -10,7 +11,7 @@ export interface GitIntegrationConfig {
   hooks: {
     post_checkout?: string;
     pre_commit?: string;
-    post_merge?: string;
+    post_merge?: string; // Reserved for future use (auto-heal removed)
   };
   silent_mode: boolean;
   auto_install_hooks: boolean;
@@ -24,18 +25,17 @@ export interface ContentQualityThresholds {
   short_content_warning: number;    // Warn if content is below this length (default: 200)
 }
 
-export type UpdateMode = 'auto' | 'manual';
 export type InitMode = 'blank' | 'template';
 export type PlanTemplateStyle = 'blank' | 'template';
 export type ContentStatus = 'empty' | 'short' | 'populated';
 
 export interface ContextUpdateConfig {
-  update_mode?: UpdateMode;
   drift_detection?: boolean;
   warn_threshold?: number;  // Number of commits before warning (default: 3)
   content_quality?: ContentQualityThresholds;
-  show_in_changed_files?: boolean;
-  auto_commit_context_updates?: boolean;
+  // Deprecated/Unused:
+  // show_in_changed_files: Removed - not implemented
+  // auto_commit_context_updates: Removed - conflicts with "Manager, not Enforcer" philosophy
 }
 
 export interface SyncPlanOptions {
@@ -54,44 +54,20 @@ export interface SyncPlanResult {
 export interface CxtConfig {
   version: string;
   mode: InitMode;
-  mcp: {
-    enabled: boolean;
-    sources: {
-      local_files: {
-        enabled: boolean;
-        readme: boolean;
-        package_json: boolean;
-        git_history: boolean;
-      };
-      claude_desktop?: {
-        enabled: boolean;
-        auto_discovered: boolean;
-      };
-      github?: {
-        enabled: boolean;
-        repo: string | null;
-        include_issues: boolean;
-        include_prs: boolean;
-      };
-      external_apis?: {
-        notion: { enabled: boolean; api_key: string | null };
-        linear: { enabled: boolean; api_key: string | null };
-      };
-    };
-  };
   context: {
-    auto_sync: boolean;
     health_checks: boolean;
     ai_attribution: boolean;
-    update_mode?: UpdateMode;
     drift_detection?: boolean;
     warn_threshold?: number;
     content_quality?: ContentQualityThresholds;
-    show_in_changed_files?: boolean;
-    auto_commit_context_updates?: boolean;
+    // Deprecated/Unused:
+    // auto_sync: Removed - not implemented
+    // show_in_changed_files: Removed - not implemented
+    // auto_commit_context_updates: Removed - conflicts with "Manager, not Enforcer" philosophy
   };
-  template?: string;
-  ai_model?: string;
+  // Deprecated/Unused:
+  // template: Removed - not implemented
+  // ai_model: Removed - not implemented
   created: string;
   git_integration?: GitIntegrationConfig;
   plan_management?: PlanManagementConfig;
@@ -152,7 +128,7 @@ export interface HealthStatus {
   lastChecked: Date;
   issues: HealthIssue[];
   suggestions: string[];
-  alignments: {
+  alignments?: {
     contextToPlan: string;
     allToGuardrails: string;
   };

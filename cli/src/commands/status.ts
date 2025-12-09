@@ -4,7 +4,7 @@ import { ContextManager } from '@cxtmanager/core';
 import type { StatusInfo } from '@cxtmanager/core';
 
 export const statusCommand = new Command('status')
-  .description('Show context file status and alignment health')
+  .description('Show context file status and health')
   .option('--detailed', 'Show detailed health report')
   .action(async (options) => {
     try {
@@ -12,7 +12,7 @@ export const statusCommand = new Command('status')
       
       // Check if initialized
       if (!await manager.isInitialized()) {
-        console.log(chalk.red('❌ CxtManager not initialized'));
+        console.log(chalk.red('❌ cxt-manager not initialized'));
         console.log(chalk.yellow('💡 Run "cit init" to get started'));
         return;
       }
@@ -68,14 +68,6 @@ export const statusCommand = new Command('status')
       
       console.log(`  ${healthIcon} Overall: ${status.health.overall}`);
       
-      // Show alignment status
-      if (options.detailed) {
-        console.log('');
-        console.log(chalk.bold('🔗 File Alignments:'));
-        console.log(`  context.md ←→ plan.md     ${getAlignmentIcon(status.health.alignments.contextToPlan)}`);
-        console.log(`  All ←→ guardrail.md       ${getAlignmentIcon(status.health.alignments.allToGuardrails)}`);
-      }
-
       // Show issues if any
       if (status.health.issues.length > 0) {
         console.log('');
@@ -177,7 +169,7 @@ export const statusCommand = new Command('status')
         console.log(chalk.yellow('💡 Ensure you have read access to .git/ directory'));
       } else if (error.message.includes('ENOENT') || error.message.includes('no such file')) {
         console.error(chalk.red('❌ .cxt/ folder not found'));
-        console.log(chalk.yellow('💡 Run "cit init" to initialize CxtManager'));
+        console.log(chalk.yellow('💡 Run "cit init" to initialize cxt-manager'));
       } else {
         console.error(chalk.red('❌ Failed to get status:'), error.message);
       }
@@ -187,13 +179,4 @@ export const statusCommand = new Command('status')
       }
       process.exit(1);
     }
-  });
-
-function getAlignmentIcon(alignment: string): string {
-  switch (alignment) {
-    case 'aligned': return '✅ Aligned';
-    case 'warning': return '⚠️  Warning';
-    case 'conflict': return '🔴 Conflict';
-    default: return '❓ Unknown';
-  }
-} 
+  }); 

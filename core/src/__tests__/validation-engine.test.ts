@@ -131,31 +131,11 @@ This is a short description.
 
       const health = await validationEngine.checkHealth();
 
-      // Should return health status with alignment information
+      // Should return health status
       expect(health).toBeDefined();
-      expect(health.alignments).toBeDefined();
-      expect(health.alignments.contextToPlan).toBeDefined();
-      // May or may not detect alignment issues depending on implementation
-    });
-  });
-
-  describe('getAlignmentStatus', () => {
-    it('should return aligned status for matching content', async () => {
-      const cxtDir = path.join(testDir, '.cxt');
-      await fs.ensureDir(cxtDir);
-
-      const content = `# Test Content
-## Section
-- Item 1
-- Item 2
-`;
-
-      await fs.writeFile(path.join(cxtDir, 'context.md'), content);
-      await fs.writeFile(path.join(cxtDir, 'plan.md'), content);
-
-      const health = await validationEngine.checkHealth();
-      
-      expect(health.alignments.contextToPlan).toBeDefined();
+      expect(health).toHaveProperty('overall');
+      expect(health).toHaveProperty('issues');
+      expect(health).toHaveProperty('suggestions');
     });
   });
 });

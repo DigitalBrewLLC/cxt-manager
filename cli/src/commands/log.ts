@@ -13,7 +13,7 @@ export const logCommand = new Command('log')
       const manager = new ContextManager();
       
       if (!await manager.isInitialized()) {
-        console.log(chalk.red('❌ CxtManager not initialized'));
+        console.log(chalk.red('❌ cxt-manager not initialized'));
         console.log(chalk.yellow('💡 Run "cit init" to get started'));
         return;
       }
@@ -27,7 +27,12 @@ export const logCommand = new Command('log')
       if (options.contextOnly) {
         await showContextOnlyLog(gitRepo, maxCount, options.oneline);
       } else {
-        await showFullLog(gitRepo, maxCount, options.oneline, options.graph);
+        // Full log with graph support is not yet implemented
+        // For now, show context-only log with a helpful message
+        console.log(chalk.yellow('💡 Full log view is not yet implemented'));
+        console.log(chalk.yellow('💡 Using context-only view instead. Use --context-only flag explicitly.'));
+        console.log('');
+        await showContextOnlyLog(gitRepo, maxCount, options.oneline);
       }
 
     } catch (error: any) {
@@ -75,71 +80,4 @@ async function showContextOnlyLog(gitRepo: any, maxCount: number, oneline: boole
       });
     }
   }
-}
-
-async function showFullLog(gitRepo: any, maxCount: number, oneline: boolean, graph: boolean) {
-  // Mock implementation - in real version we'd use git log
-  const commits = [
-    {
-      hash: 'a1b2c3d',
-      date: new Date(),
-      author: 'Developer',
-      message: 'Update project goals and timeline',
-      contextFiles: ['context.md', 'plan.md']
-    },
-    {
-      hash: 'e4f5g6h',
-      date: new Date(Date.now() - 86400000),
-      author: 'Claude-3-Sonnet (via MCP)',
-      message: 'auto: sync API limits from code changes',
-      contextFiles: ['plan.md']
-    },
-    {
-      hash: 'i7j8k9l',
-      date: new Date(Date.now() - 172800000),
-      author: 'github-copilot (code-triggered)',
-      message: 'auto-heal: fix context alignment issues',
-      contextFiles: ['context.md', 'plan.md']
-    }
-  ];
-
-  commits.slice(0, maxCount).forEach((commit, index) => {
-    const isLast = index === commits.length - 1 || index === maxCount - 1;
-    
-    if (graph) {
-      const connector = isLast ? '└──' : '├──';
-      console.log(chalk.gray(connector));
-    }
-
-    if (oneline) {
-      const attribution = getCommitAttribution(commit.author);
-      console.log(`${chalk.yellow(commit.hash)} ${attribution} ${commit.message}`);
-    } else {
-      const attribution = getCommitAttribution(commit.author);
-      console.log(chalk.yellow(`commit ${commit.hash}`));
-      console.log(`Author: ${commit.author} ${attribution}`);
-      console.log(`Date:   ${commit.date.toLocaleString()}`);
-      console.log('');
-      console.log(`    ${commit.message}`);
-      
-      if (commit.contextFiles.length > 0) {
-        console.log('');
-        console.log(chalk.gray('    Context files changed:'));
-        commit.contextFiles.forEach(file => {
-          console.log(chalk.gray(`    - ${file}`));
-        });
-      }
-      console.log('');
-    }
-  });
-
-  console.log(chalk.gray(`Showing ${Math.min(maxCount, commits.length)} of ${commits.length} commits`));
-  console.log(chalk.blue('💡 Use "cit log --context-only" to see only context file changes'));
-}
-
-function getCommitAttribution(author: string): string {
-  if (author.includes('Claude') || author.includes('GPT')) return '🧠';
-  if (author.includes('copilot') || author.includes('code-triggered')) return '🔄';
-  if (author.includes('External') || author.includes('Sync')) return '🌐';
-  return '👨‍💻';
 } 

@@ -27,7 +27,6 @@ describe('CLI', () => {
       const { initCommand } = require('../commands/init');
       const { statusCommand } = require('../commands/status');
       const { validateCommand } = require('../commands/validate');
-      const { autoHealCommand } = require('../commands/auto-heal');
       const { blameCommand } = require('../commands/blame');
       const { addCommand } = require('../commands/add');
       const { commitCommand } = require('../commands/commit');
@@ -42,7 +41,6 @@ describe('CLI', () => {
         initCommand,
         statusCommand,
         validateCommand,
-        autoHealCommand,
         blameCommand,
         addCommand,
         commitCommand,

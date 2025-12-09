@@ -9,7 +9,7 @@ import { ContextManager, GitHooksManager } from '@cxtmanager/core';
 import type { InitOptions } from '@cxtmanager/core';
 
 export const initCommand = new Command('init')
-  .description('Initialize CxtManager in current project (like git init)')
+  .description('Initialize cxt-manager in current project (like git init)')
   .option('--template', 'Pre-structured with section headers and guidance')
   .option('--blank', 'Just title and metadata (you organize it)')
   .action(async (options) => {
@@ -18,7 +18,7 @@ export const initCommand = new Command('init')
       
       // Check if already initialized
       if (await manager.isInitialized()) {
-        console.log(chalk.red('❌ CxtManager already initialized'));
+        console.log(chalk.red('❌ cxt-manager already initialized'));
         console.log(chalk.yellow('💡 Use "cit status" to check current state'));
         return;
       }
@@ -83,27 +83,25 @@ export const initCommand = new Command('init')
       if (hasExistingHooks) {
         console.log(chalk.yellow('  ⚠️  Existing git hooks detected in .git/hooks/'));
         console.log('');
-        console.log('  CxtManager can add its hooks alongside your existing ones:');
+        console.log('  cxt-manager can add its hooks alongside your existing ones:');
         console.log('  • Switch plan.md when you change branches');
         console.log('  • Validate context files before commits');
-        console.log('  • Auto-heal alignment issues after merges');
         console.log('');
-        console.log('  Your existing hooks will continue to work.');
+        console.log('  Your existing hooks will continue to work unchanged.');
         console.log('');
         const hooksAnswer = await inquirer.prompt([
           {
             type: 'confirm',
             name: 'installHooks',
-            message: 'Add CxtManager hooks?',
+            message: 'Add cxt-manager hooks?',
             default: true
           }
         ]);
         installHooks = hooksAnswer.installHooks;
       } else {
-        console.log('  CxtManager can automatically:');
+        console.log('  cxt-manager can automatically:');
         console.log('  • Switch plan.md when you change branches');
         console.log('  • Validate context files before commits');
-        console.log('  • Auto-heal alignment issues after merges');
         console.log('');
         const hooksAnswer = await inquirer.prompt([
           {
@@ -117,53 +115,7 @@ export const initCommand = new Command('init')
       }
       console.log('');
 
-      // Question 3: Update Mode
-      console.log('');
-      console.log(chalk.bold('🤖 Context Update Mode'));
-      console.log('');
-      console.log('  How should CxtManager handle context file updates?');
-      console.log('');
-      let updateMode: 'auto' | 'manual' = 'manual';
-      const updateAnswer = await inquirer.prompt([
-        {
-          type: 'list',
-          name: 'updateMode',
-          message: 'Choose an option:',
-          choices: [
-            {
-              name: '1) Manual (Recommended) - Shows warnings, you decide when to update',
-              value: 'manual',
-              short: 'Manual'
-            },
-            {
-              name: '2) Auto - AI tool updates automatically, you review changes',
-              value: 'auto',
-              short: 'Auto'
-            }
-          ],
-          default: 0
-        }
-      ]);
-      updateMode = updateAnswer.updateMode;
-      console.log('');
-      
-      // Show additional info about the chosen mode
-      if (updateMode === 'manual') {
-        console.log(chalk.gray('  💡 Manual mode: Shows warnings when context files are out of sync'));
-        console.log(chalk.gray('     You (and/or AI) decide when to update (via \'cit status\' warnings)'));
-        console.log(chalk.gray('     You review all changes before committing'));
-        console.log(chalk.gray('     Best for: Teams, critical projects, full control'));
-      } else {
-        console.log(chalk.gray('  💡 Auto mode: Detects drift and notifies your AI tool'));
-        console.log(chalk.gray('     AI tool updates context files automatically'));
-        console.log(chalk.gray('     Changes appear in editor for you to review/accept'));
-        console.log(chalk.gray('     Best for: Solo dev, AI-driven workflows, rapid iteration'));
-      }
-      console.log('');
-      console.log(chalk.gray('  💡 You can change this later in .cxt/.cxtconfig.json'));
-      console.log('');
-
-      // Question 4: Track in Git
+      // Question 3: Track in Git
       console.log('');
       console.log(chalk.bold('🔒 Privacy & Git Tracking'));
       console.log('');
@@ -203,7 +155,7 @@ export const initCommand = new Command('init')
       console.log(chalk.gray('  💡 You can change this later in .cxt/.cxtconfig.json'));
       console.log('');
 
-      const spinner = ora('Initializing CxtManager...').start();
+      const spinner = ora('Initializing cxt-manager...').start();
       spinner.text = `Initializing with mode: ${mode}`;
 
       // Add trackInGit to init options
@@ -217,7 +169,6 @@ export const initCommand = new Command('init')
       const configPath = path.join(process.cwd(), '.cxt', '.cxtconfig.json');
       
       if (config.context) {
-        config.context.update_mode = updateMode;
         config.context.drift_detection = true;
       }
       
@@ -242,16 +193,16 @@ export const initCommand = new Command('init')
           if (installedHooks.length > 0) {
             hooksInstalled = true;
             if (hasExistingHooks) {
-              spinner.succeed('CxtManager initialized successfully! Git hooks added to existing hooks');
+              spinner.succeed('cxt-manager initialized successfully! Git hooks added to existing hooks');
             } else {
-              spinner.succeed(`CxtManager initialized successfully! Git hooks installed (${installedHooks.join(', ')})`);
+              spinner.succeed(`cxt-manager initialized successfully! Git hooks installed (${installedHooks.join(', ')})`);
             }
           } else {
-            spinner.succeed('CxtManager initialized successfully!');
+            spinner.succeed('cxt-manager initialized successfully!');
           }
         } catch (error: any) {
           // Don't fail init if hooks fail to install
-          spinner.succeed('CxtManager initialized successfully!');
+          spinner.succeed('cxt-manager initialized successfully!');
           console.log(chalk.yellow(`⚠️  Warning: Could not install git hooks: ${error.message}`));
           console.log(chalk.gray('   You can install them manually with: cit hooks install'));
         }
@@ -286,22 +237,21 @@ export const initCommand = new Command('init')
       console.log('');
       console.log(chalk.bold('🚀 Useful commands:'));
       console.log(chalk.yellow('   cit status           - Check context health and see what needs attention'));
-      console.log(chalk.yellow('   cit validate         - Verify file alignment'));
+      console.log(chalk.yellow('   cit validate         - Check context file health'));
       console.log(chalk.yellow('   cit log              - View context file history'));
       
       if (mode === 'template') {
-        console.log(chalk.yellow('   cit auto-heal        - Auto-fix any issues'));
         console.log('');
         console.log(chalk.blue('💡 The context files contain helpful comments explaining what to fill in.'));
-        console.log(chalk.blue('   Edit them to document your project - CxtManager manages the files, you provide the content.'));
+        console.log(chalk.blue('   Edit them to document your project - cxt-manager manages the files, you provide the content.'));
       } else {
         console.log('');
         console.log(chalk.blue('💡 Review and edit the generated context files.'));
-        console.log(chalk.blue('   The files contain template content - customize them with your project details.'));
+        console.log(chalk.blue('   The files have minimal structure - customize them with your project details.'));
       }
 
     } catch (error: any) { // TODO: Properly type error instead of using any
-      ora().fail('Failed to initialize CxtManager');
+      ora().fail('Failed to initialize cxt-manager');
       console.error(chalk.red('❌'), error.message);
       if (process.env.DEBUG) {
         console.error(error.stack);

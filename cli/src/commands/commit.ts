@@ -13,7 +13,7 @@ export const commitCommand = new Command('commit')
       const manager = new ContextManager();
       
       if (!await manager.isInitialized()) {
-        console.log(chalk.red('❌ CxtManager not initialized'));
+        console.log(chalk.red('❌ cxt-manager not initialized'));
         console.log(chalk.yellow('💡 Run "cit init" to get started'));
         return;
       }
@@ -32,9 +32,9 @@ export const commitCommand = new Command('commit')
         message = answers.message;
       }
 
-      // Validate context alignment before commit (unless --no-verify)
+      // Validate context health before commit (unless --no-verify)
       if (options.verify !== false) {
-        console.log(chalk.blue('🔍 Validating context alignment before commit...'));
+        console.log(chalk.blue('🔍 Validating context health before commit...'));
         const health = await manager.validate();
         
         if (health.overall === 'error') {

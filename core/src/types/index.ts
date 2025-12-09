@@ -4,32 +4,6 @@
 
 export interface CxtConfig {
   version: string;
-  mcp: {
-    enabled: boolean;
-    auto_discover: boolean;
-    sources: {
-      local_files: {
-        enabled: boolean;
-        readme: boolean;
-        package_json: boolean;
-        git_history: boolean;
-      };
-      claude_desktop: {
-        enabled: boolean;
-        auto_discovered: boolean;
-      };
-      github: {
-        enabled: boolean;
-        repo: string | null;
-        include_issues: boolean;
-        include_prs: boolean;
-      };
-      external_apis: {
-        notion: { enabled: boolean; api_key: string | null };
-        linear: { enabled: boolean; api_key: string | null };
-      };
-    };
-  };
   context: {
     auto_sync: boolean;
     health_checks: boolean;
@@ -113,7 +87,7 @@ export interface AttributionInfo {
 
 export interface HealthStatus {
   overall: 'healthy' | 'warning' | 'error';
-  alignments: {
+  alignments?: {
     contextToPlan: AlignmentStatus;
     allToGuardrails: AlignmentStatus;
   };

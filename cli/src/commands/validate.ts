@@ -4,7 +4,7 @@ import { ContextManager } from '@cxtmanager/core';
 import type { HealthIssue, HealthStatus } from '@cxtmanager/core';
 
 export const validateCommand = new Command('validate')
-  .description('Validate context file alignment and consistency')
+  .description('Validate context file quality and health')
   .option('--detailed', 'Show detailed validation report')
   .option('--quick', 'Quick validation (faster, less thorough)')
   .option('--silent', 'No output unless errors (for git hooks)')
@@ -14,7 +14,7 @@ export const validateCommand = new Command('validate')
       
       if (!await manager.isInitialized()) {
         if (!options.silent) {
-          console.log(chalk.red('❌ CxtManager not initialized'));
+          console.log(chalk.red('❌ cxt-manager not initialized'));
           console.log(chalk.yellow('💡 Run "cit init" to get started'));
         }
         process.exit(1);
@@ -22,7 +22,7 @@ export const validateCommand = new Command('validate')
       }
 
       if (!options.silent) {
-        console.log(chalk.blue('🔍 Validating context file alignment...'));
+        console.log(chalk.blue('🔍 Validating context file health...'));
         console.log('');
       }
 
@@ -46,14 +46,6 @@ export const validateCommand = new Command('validate')
       
       console.log(chalk.bold(`${healthIcon} Overall Health: ${health.overall.toUpperCase()}`));
       console.log('');
-
-      // Detailed alignment status
-      if (options.detailed || health.overall !== 'healthy') {
-        console.log(chalk.bold('🔗 Context File Alignments:'));
-        console.log(`├── context.md ←→ plan.md     ${getDetailedAlignmentStatus(health.alignments.contextToPlan)}`);
-        console.log(`└── All ←→ guardrail.md       ${getDetailedAlignmentStatus(health.alignments.allToGuardrails)}`);
-        console.log('');
-      }
 
       // Show issues
       if (health.issues.length > 0) {
@@ -96,20 +88,13 @@ export const validateCommand = new Command('validate')
 
       // Summary and next steps
       if (health.overall === 'healthy') {
-        console.log(chalk.green('✅ All context files are well-aligned!'));
+        console.log(chalk.green('✅ All context files are healthy!'));
         console.log(chalk.gray('   Your AI assistants can confidently reference these files.'));
       } else {
-        const autoFixableCount = health.issues.filter((i: HealthIssue) => i.autoFixable).length;
-        
-        if (autoFixableCount > 0) {
-          console.log(chalk.yellow(`🔧 ${autoFixableCount} issues can be fixed automatically:`));
-          console.log(chalk.blue('   cit auto-heal --dry-run    # Preview fixes'));
-          console.log(chalk.blue('   cit auto-heal              # Apply fixes'));
-        }
-        
-        const manualCount = health.issues.filter((i: HealthIssue) => !i.autoFixable).length;
-        if (manualCount > 0) {
-          console.log(chalk.yellow(`✏️  ${manualCount} issues need manual attention.`));
+        const issueCount = health.issues.length;
+        if (issueCount > 0) {
+          console.log(chalk.yellow(`✏️  ${issueCount} issue(s) found. Review and update your context files as needed.`));
+          console.log(chalk.blue('   Your AI assistant can help you update these files based on the suggestions above.'));
         }
       }
 
@@ -138,7 +123,7 @@ export const validateCommand = new Command('validate')
       } else if (errorMessage.includes('ENOENT') || errorMessage.includes('no such file')) {
         if (!options.silent) {
           console.error(chalk.red('❌ .cxt/ folder not found'));
-          console.log(chalk.yellow('💡 Run "cit init" to initialize CxtManager'));
+          console.log(chalk.yellow('💡 Run "cit init" to initialize cxt-manager'));
         }
       } else {
         if (!options.silent) {
@@ -151,13 +136,4 @@ export const validateCommand = new Command('validate')
       }
       process.exit(1);
     }
-  });
-
-function getDetailedAlignmentStatus(alignment: string): string {
-  switch (alignment) {
-    case 'aligned': return chalk.green('✅ Goals aligned');
-    case 'warning': return chalk.yellow('⚠️  Timeline mismatch detected');
-    case 'conflict': return chalk.red('🔴 Feature conflicts found');
-    default: return chalk.gray('❓ Unknown status');
-  }
-} 
+  }); 
