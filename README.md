@@ -117,10 +117,9 @@ yarn global add @cxtmanager/cli
 cit init
 
 # Interactive setup asks:
-# 1. Template style (minimal/detailed/manual)
+# 1. Template style (blank/template)
 # 2. Git hooks installation (auto-switch plan.md on branch changes)
-# 3. Update mode (manual/auto)
-# 4. Privacy & Git tracking (tracked/private)
+# 3. Privacy & Git tracking (tracked/private)
 
 # Your .cxt/ files are created - fill them with your AI's help
 # Then reference them in any AI conversation
@@ -265,7 +264,7 @@ index 1234567..abcdefg
 cit validate
 
 ✅ All context files are aligned
-⚠️  Warning: plan.md has 45% template content (consider updating)
+⚠️  Warning: plan.md has very little content (45 chars, 2 lines)
 ✅ Cross-references are consistent
 ```
 

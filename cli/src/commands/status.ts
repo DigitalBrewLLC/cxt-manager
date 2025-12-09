@@ -20,12 +20,13 @@ export const statusCommand = new Command('status')
       // Get status information
       const status: StatusInfo = await manager.status();
       
-      // Get config for thresholds
+      // Get config for content quality thresholds
       const config = await manager.getConfig();
-      const thresholds = config.context?.template_thresholds || {
-        well_populated: 30,
-        mild_warning: 50,
-        critical: 70
+      const thresholds = config.context?.content_quality || {
+        min_content_length: 100,
+        min_content_lines: 3,
+        empty_section_warning: true,
+        short_content_warning: 200
       };
       
       // Display Git status
@@ -112,43 +113,37 @@ export const statusCommand = new Command('status')
         let contentIcon = '';
         let contentText = '';
         const contentStatus = file.contentStatus;
-        const templatePercentage = file.templatePercentage;
+        const contentQuality = file.contentQuality;
         const fileSize = file.size;
-        
-        // Graduated warning system with configurable thresholds
-        const WELL_POPULATED = thresholds.well_populated;
-        const MILD_WARNING = thresholds.mild_warning;
-        const CRITICAL = thresholds.critical;
-        
-        const percentage = templatePercentage ?? 0;
         
         if (contentStatus === 'empty') {
           contentIcon = '📭';
-          contentText = chalk.red(' (empty - 100% template)');
+          contentText = chalk.red(' (empty)');
           suggestions.push(`${file.file} is empty. Consider populating it with relevant information.`);
-        } else if (contentStatus === 'template-only' || percentage >= CRITICAL) {
-          // Critical: 70%+ template
-          contentIcon = '🔴';
-          if (percentage >= 90) {
-            contentText = chalk.red(` (${percentage}% template)`);
-          } else {
-            contentText = chalk.red(` (${percentage}% template)`);
-          }
-          suggestions.push(`🔴 ${file.file} is ${percentage}% template content and needs significant work.`);
-        } else if (percentage >= MILD_WARNING) {
-          // Warning: 50-70% template
+        } else if (contentStatus === 'short') {
+          // Short content - below minimum thresholds
           contentIcon = '⚠️';
-          contentText = chalk.yellow(` (${percentage}% template)`);
-          suggestions.push(`⚠️  ${file.file} is ${percentage}% template content. Consider adding more project-specific information.`);
-        } else if (percentage > WELL_POPULATED) {
-          // Mild suggestion: 30-50% template
+          const length = contentQuality?.contentLength ?? 0;
+          const lines = contentQuality?.contentLines ?? 0;
+          contentText = chalk.yellow(` (short: ${length} chars, ${lines} lines)`);
+          suggestions.push(`⚠️  ${file.file} has very little content (${length} chars, ${lines} lines). Minimum recommended: ${thresholds.min_content_length} chars, ${thresholds.min_content_lines} lines.`);
+        } else if (contentQuality && contentQuality.contentLength < thresholds.short_content_warning) {
+          // Populated but relatively short - use config threshold
           contentIcon = '💡';
-          contentText = chalk.blue(` (${percentage}% template)`);
-          suggestions.push(`💡 ${file.file} is ${percentage}% template content. Consider adding more content.`);
-        } else if (percentage > 0 && percentage <= WELL_POPULATED) {
-          // Well populated: <= 30% template - show positive feedback
+          contentText = chalk.blue(` (${contentQuality.contentLength} chars)`);
+          suggestions.push(`💡 ${file.file} could use more content (currently ${contentQuality.contentLength} chars).`);
+        } else {
+          // Well populated
           contentIcon = '✅';
-          contentText = chalk.green(` (${percentage}% template - well populated!)`);
+          if (contentQuality) {
+            contentText = chalk.green(` (${contentQuality.contentLength} chars, ${contentQuality.contentLines} lines)`);
+          }
+        }
+        
+        // Show empty sections warning if applicable
+        if (contentQuality?.emptySections && contentQuality.emptySections > 0) {
+          contentText += chalk.yellow(` [${contentQuality.emptySections} empty section${contentQuality.emptySections > 1 ? 's' : ''}]`);
+          suggestions.push(`💡 ${file.file} has ${contentQuality.emptySections} empty section${contentQuality.emptySections > 1 ? 's' : ''}. Consider filling them in.`);
         }
         
         const sizeText = fileSize !== undefined ? chalk.gray(` (${(fileSize / 1024).toFixed(1)} KB)`) : '';

@@ -6,7 +6,7 @@ export const syncPlanCommand = new Command('sync-plan')
   .description('Sync plan.md for current branch (save current, restore for new branch)')
   .option('--silent', 'No output unless errors')
   .option('--create-if-missing', 'Create blank plan if branch has no saved plan')
-  .option('--template <type>', 'Template type for new plans (minimal/detailed)', 'minimal')
+  .option('--template <type>', 'Template style for new plans (blank/template)', undefined)
   .action(async (options) => {
     try {
       const manager = new ContextManager();
@@ -25,7 +25,7 @@ export const syncPlanCommand = new Command('sync-plan')
       const result = await manager.syncPlan({
         silent: options.silent,
         createIfMissing: options.createIfMissing !== false, // Default true
-        template: options.template as 'minimal' | 'detailed'
+        template: options.template as 'blank' | 'template' | undefined
       });
 
       // Output results (unless silent)

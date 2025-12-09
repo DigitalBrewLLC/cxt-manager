@@ -1,18 +1,19 @@
 import * as fs from 'fs-extra';
 import * as path from 'path';
-import { HealthStatus, HealthIssue, TemplateThresholds } from './types';
+import { HealthStatus, HealthIssue, ContentQualityThresholds, ContentStatus } from './types';
 
 export class ValidationEngine {
   private cxtPath: string;
-  private templateThresholds: TemplateThresholds;
+  private contentThresholds: ContentQualityThresholds;
 
-  constructor(cxtPath: string, templateThresholds?: TemplateThresholds) {
+  constructor(cxtPath: string, contentThresholds?: ContentQualityThresholds) {
     this.cxtPath = cxtPath;
     // Default thresholds if not provided
-    this.templateThresholds = templateThresholds || {
-      well_populated: 30,
-      mild_warning: 50,
-      critical: 70
+    this.contentThresholds = contentThresholds || {
+      min_content_length: 100,
+      min_content_lines: 3,
+      empty_section_warning: true,
+      short_content_warning: 200
     };
   }
 
@@ -112,55 +113,54 @@ export class ValidationEngine {
       }
     }
 
-    // Check for template-only content with graduated warnings
-    // Use configurable thresholds (defaults: 30%, 50%, 70%)
-    const WELL_POPULATED_THRESHOLD = this.templateThresholds.well_populated;
-    const MILD_WARNING_THRESHOLD = this.templateThresholds.mild_warning;
-    const CRITICAL_THRESHOLD = this.templateThresholds.critical;
+    // Check content quality with configurable thresholds
+    const MIN_LENGTH = this.contentThresholds.min_content_length;
+    const MIN_LINES = this.contentThresholds.min_content_lines;
+    const SHORT_WARNING = this.contentThresholds.short_content_warning;
+    const WARN_EMPTY_SECTIONS = this.contentThresholds.empty_section_warning;
     
     for (const [fileName, content] of contextFiles) {
-      const templateInfo = this.getTemplatePercentage(content);
-      const percentage = templateInfo.percentage;
+      const quality = this.analyzeContentQuality(content, fileName);
+      const filePurpose = this.getFilePurpose(fileName);
       
-      // Only create issues if template percentage is above well-populated threshold
-      if (percentage > WELL_POPULATED_THRESHOLD) {
-        const filePurpose = this.getFilePurpose(fileName);
-        
-        if (percentage >= CRITICAL_THRESHOLD || templateInfo.isTemplateOnly) {
-          // Critical: 70%+ template or marked as template-only
-          issues.push({
-            type: 'error',
-            file: fileName,
-            message: `File contains ${percentage}% template/placeholder content`,
-            suggestion: `This file needs significant content. Consider populating ${fileName} with ${filePurpose}. The file contains helpful guidance comments explaining what to fill in.`,
-            autoFixable: false
-          });
-        } else if (percentage >= MILD_WARNING_THRESHOLD) {
-          // Warning: 50-70% template
-          issues.push({
-            type: 'warning',
-            file: fileName,
-            message: `File contains ${percentage}% template content`,
-            suggestion: `Consider adding more project-specific content to ${fileName}. Currently ${percentage}% is template/guidance.`,
-            autoFixable: false
-          });
-        } else {
-          // Mild suggestion: 30-50% template
-          issues.push({
-            type: 'warning',
-            file: fileName,
-            message: `File contains ${percentage}% template content`,
-            suggestion: `Consider adding more content to ${fileName} to make it more useful. Currently ${percentage}% is template/guidance.`,
-            autoFixable: false
-          });
-        }
-      } else if (content.trim().length < 100 && percentage <= WELL_POPULATED_THRESHOLD) {
-        // Only warn about empty files if they're not already flagged for template content
+      // Check if file is empty
+      if (quality.status === 'empty') {
+        issues.push({
+          type: 'error',
+          file: fileName,
+          message: 'File is empty or contains only structure',
+          suggestion: `Add content to ${fileName} to document ${filePurpose}.`,
+          autoFixable: false
+        });
+      }
+      // Check if content is too short
+      else if (quality.status === 'short' || quality.contentLength < MIN_LENGTH) {
+        const severity = quality.contentLength < MIN_LENGTH ? 'error' : 'warning';
+        issues.push({
+          type: severity,
+          file: fileName,
+          message: `File has very little content (${quality.contentLength} characters, ${quality.contentLines} lines)`,
+          suggestion: `Consider adding more content to ${fileName}. Minimum recommended: ${MIN_LENGTH} characters, ${MIN_LINES} lines.`,
+          autoFixable: false
+        });
+      }
+      // Check for empty sections in template mode
+      else if (WARN_EMPTY_SECTIONS && quality.emptySections && quality.emptySections > 0) {
         issues.push({
           type: 'warning',
           file: fileName,
-          message: 'File appears to be mostly empty',
-          suggestion: 'Add content to properly document this aspect. See the guidance comments in the file for what to include.',
+          message: `File has ${quality.emptySections} empty section(s)`,
+          suggestion: `Consider filling in the empty sections in ${fileName} to make it more complete.`,
+          autoFixable: false
+        });
+      }
+      // Warn if content is below short_content_warning threshold
+      else if (quality.contentLength < SHORT_WARNING && quality.status === 'populated') {
+        issues.push({
+          type: 'warning',
+          file: fileName,
+          message: `File content is relatively short (${quality.contentLength} characters)`,
+          suggestion: `Consider expanding ${fileName} with more details about ${filePurpose}.`,
           autoFixable: false
         });
       }
@@ -170,66 +170,94 @@ export class ValidationEngine {
   }
 
   /**
-   * Calculate template percentage and determine if content is template-only
+   * Analyze content quality - detect empty, short, or populated content
    */
-  private getTemplatePercentage(content: string): {
-    percentage: number;
-    isTemplateOnly: boolean;
+  private analyzeContentQuality(content: string, fileName: string): {
+    status: ContentStatus;
+    contentLength: number;
+    contentLines: number;
+    emptySections?: number;
   } {
     if (!content || content.trim().length === 0) {
-      return { percentage: 100, isTemplateOnly: true };
+      return { status: 'empty', contentLength: 0, contentLines: 0 };
     }
 
     const lines = content.split('\n');
-    let templateChars = 0;
-    let totalChars = 0;
+    let contentLength = 0;
+    let contentLines: string[] = [];
+    let emptySections = 0;
+    let inSection = false;
+    let sectionHasContent = false;
     
     // Analyze each line
     for (const line of lines) {
       const trimmed = line.trim();
-      if (trimmed.length === 0) {
-        continue; // Skip empty lines
+      
+      // Check if this is a section header
+      if (trimmed.startsWith('##')) {
+        // If we were in a section and it had no content, count it as empty
+        if (inSection && !sectionHasContent) {
+          emptySections++;
+        }
+        inSection = true;
+        sectionHasContent = false;
+        continue; // Don't count headers as content
       }
       
-      totalChars += line.length;
+      // Skip empty lines
+      if (trimmed.length === 0) {
+        continue;
+      }
       
-      // Check if line is template/guidance content
-      const isTemplateLine = 
+      // Skip structural elements (metadata, horizontal rules, etc.)
+      const isStructural = 
+        trimmed.startsWith('#') || // Other headers
+        (trimmed.startsWith('*') && (trimmed.includes('Last Updated') || trimmed.includes('References') || trimmed.includes('This file') || trimmed.includes('contains stable') || trimmed.includes('branch-specific') || trimmed.includes('Branch:') || trimmed.includes('Created:'))) ||
+        trimmed.startsWith('---') ||
+        trimmed.match(/^[-*+]\s*$/) !== null;
+      
+      // Skip guidance comments (they're intentional in template mode)
+      const isGuidance = 
         trimmed.startsWith('<!--') ||
         trimmed.includes('GUIDANCE:') ||
         trimmed.includes('TIP:') ||
         trimmed.includes('Example:') ||
-        (trimmed.startsWith('*') && (trimmed.includes('Last Updated') || trimmed.includes('References') || trimmed.includes('This file'))) ||
         trimmed === '-->';
       
-      if (isTemplateLine) {
-        templateChars += line.length;
+      // Count actual user content
+      if (!isStructural && !isGuidance) {
+        contentLength += trimmed.length;
+        contentLines.push(trimmed);
+        if (inSection) {
+          sectionHasContent = true;
+        }
       }
     }
     
-    // Calculate percentage
-    const percentage = totalChars > 0 
-      ? Math.round((templateChars / totalChars) * 100)
-      : 100;
+    // Check final section
+    if (inSection && !sectionHasContent) {
+      emptySections++;
+    }
     
-    // Check for very little actual content
-    const contentLines = lines.filter(line => {
-      const trimmed = line.trim();
-      return trimmed.length > 0 && 
-             !trimmed.startsWith('<!--') && 
-             !trimmed.startsWith('*') &&
-             !trimmed.startsWith('#') &&
-             trimmed !== '-->' &&
-             !trimmed.includes('GUIDANCE:') &&
-             !trimmed.includes('TIP:') &&
-             !trimmed.includes('Example:');
-    });
+    // Determine status
+    const MIN_LENGTH = this.contentThresholds.min_content_length;
+    const MIN_LINES = this.contentThresholds.min_content_lines;
     
-    // Determine if template-only using configurable critical threshold
-    // Also consider template-only if very few content lines
-    const isTemplateOnly = percentage >= this.templateThresholds.critical || (contentLines.length <= 3 && percentage > this.templateThresholds.well_populated);
+    let status: ContentStatus;
+    if (contentLength === 0 || contentLines.length === 0) {
+      status = 'empty';
+    } else if (contentLength < MIN_LENGTH || contentLines.length < MIN_LINES) {
+      status = 'short';
+    } else {
+      status = 'populated';
+    }
     
-    return { percentage, isTemplateOnly };
+    return { 
+      status, 
+      contentLength, 
+      contentLines: contentLines.length,
+      emptySections: emptySections > 0 ? emptySections : undefined
+    };
   }
 
   /**
@@ -288,7 +316,8 @@ export class ValidationEngine {
       if (i.message.includes('% template')) {
         const match = i.message.match(/(\d+)%/);
         const percentage = match ? parseInt(match[1]) : 0;
-        return percentage > this.templateThresholds.well_populated;
+        // Legacy template percentage check - no longer used with content quality detection
+        return false;
       }
       return false;
     });
