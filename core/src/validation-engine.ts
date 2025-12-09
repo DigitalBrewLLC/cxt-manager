@@ -28,9 +28,6 @@ export class ValidationEngine {
     const basicIssues = await this.checkCommonIssues(contextFiles);
     issues.push(...basicIssues);
 
-    // Check alignments between files
-    const alignments = await this.checkAlignments(contextFiles);
-
     // In quick mode, skip outdated info check (faster)
     if (!quick) {
       // Check for outdated information
@@ -54,8 +51,8 @@ export class ValidationEngine {
       overall,
       lastChecked: new Date(),
       issues,
-      suggestions,
-      alignments
+      suggestions
+      // alignments: Reserved for future MCP/agent integration with semantic understanding
     };
   }
 
@@ -74,29 +71,8 @@ export class ValidationEngine {
     return files;
   }
 
-  private async checkAlignments(contextFiles: Map<string, string>): Promise<any> {
-    // Simple alignment checking - in real implementation, this would be more sophisticated
-    return {
-      contextToPlan: 'aligned',
-      allToGuardrails: 'aligned'
-    };
-  }
-
   private async checkCommonIssues(contextFiles: Map<string, string>): Promise<HealthIssue[]> {
     const issues: HealthIssue[] = [];
-
-    // Check for missing required sections
-    for (const [fileName, content] of contextFiles) {
-      if (this.isMissingRequiredSections(fileName, content)) {
-        issues.push({
-          type: 'warning',
-          file: fileName,
-          message: 'Missing required sections',
-          suggestion: 'Add standard sections for this file type',
-          autoFixable: true
-        });
-      }
-    }
 
     // Check content quality with configurable thresholds
     const MIN_LENGTH = this.contentThresholds.min_content_length;
@@ -280,17 +256,6 @@ export class ValidationEngine {
     }
 
     return issues;
-  }
-
-  private isMissingRequiredSections(fileName: string, content: string): boolean {
-    const requiredSections: Record<string, string[]> = {
-      'context.md': ['Project Purpose', 'Core Problem', 'Solution', 'Target Users'],
-      'plan.md': ['Architecture Overview', 'Development Phases', 'Technology Stack'],
-      'guardrail.md': ['Code Standards', 'Architecture Rules']
-    };
-    
-    const required = requiredSections[fileName] || [];
-    return required.some((section: string) => !content.includes(`## ${section}`));
   }
 
   private generateSuggestions(issues: HealthIssue[]): string[] {

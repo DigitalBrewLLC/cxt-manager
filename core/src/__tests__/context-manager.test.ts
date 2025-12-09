@@ -53,6 +53,54 @@ describe('ContextManager', () => {
     });
   });
 
+  describe('loadConfig', () => {
+    it('should throw helpful error for corrupted JSON config', async () => {
+      await fs.ensureDir(path.join(testDir, '.cxt'));
+      await fs.writeFile(path.join(testDir, '.cxt', '.cxtconfig.json'), '{ invalid json }');
+      
+      await expect(
+        (manager as any).loadConfig()
+      ).rejects.toThrow('Configuration file is corrupted or invalid JSON');
+      
+      try {
+        await (manager as any).loadConfig();
+        fail('Should have thrown an error');
+      } catch (error: any) {
+        expect(error.message).toContain('Configuration file is corrupted or invalid JSON');
+        expect(error.message).toContain('Check .cxt/.cxtconfig.json for syntax errors');
+        expect(error.message).toContain('run "cit init" to reinitialize');
+      }
+    });
+
+    it('should throw helpful error for missing config file', async () => {
+      await expect(
+        (manager as any).loadConfig()
+      ).rejects.toThrow('Configuration file not found');
+      
+      try {
+        await (manager as any).loadConfig();
+        fail('Should have thrown an error');
+      } catch (error: any) {
+        expect(error.message).toContain('Configuration file not found');
+        expect(error.message).toContain('Run "cit init" to initialize cxt-manager');
+      }
+    });
+
+    it('should load valid config successfully', async () => {
+      await fs.ensureDir(path.join(testDir, '.cxt'));
+      await fs.writeJson(path.join(testDir, '.cxt', '.cxtconfig.json'), {
+        version: '1.0.0',
+        mode: 'blank',
+        created: new Date().toISOString()
+      });
+      
+      const config = await (manager as any).loadConfig();
+      expect(config).toBeDefined();
+      expect(config.version).toBe('1.0.0');
+      expect(config.mode).toBe('blank');
+    });
+  });
+
   describe('status', () => {
     it('should throw error when not initialized', async () => {
       await expect(manager.status()).rejects.toThrow('CxtManager not initialized');
@@ -100,8 +148,8 @@ describe('ContextManager', () => {
         expect(health).toHaveProperty('overall');
         expect(health).toHaveProperty('issues');
         expect(health).toHaveProperty('suggestions');
-        expect(health).toHaveProperty('alignments');
         expect(health).toHaveProperty('lastChecked');
+        // alignments is optional - reserved for future MCP/agent integration
         expect(['healthy', 'warning', 'error']).toContain(health.overall);
       } catch (error) {
         // Expected if git is not initialized
@@ -149,6 +197,20 @@ describe('ContextManager', () => {
       // Note: This test verifies that .cxt is not created if git init fails
       // The actual git init will succeed in test environment, so we verify
       // the cleanup logic in the other test
+    });
+
+    it('should throw helpful error when Git user is not configured during init with trackInGit', async () => {
+      // Initialize git repo but don't set user config
+      const { execSync } = require('child_process');
+      execSync('git init', { cwd: testDir });
+      
+      await expect(
+        manager.init({ mode: 'blank', trackInGit: true })
+      ).rejects.toThrow('Git user information not configured');
+      
+      // .cxt folder should be cleaned up
+      const cxtExists = await fs.pathExists(path.join(testDir, '.cxt'));
+      expect(cxtExists).toBe(false);
     });
 
     it('should successfully initialize when all steps complete', async () => {

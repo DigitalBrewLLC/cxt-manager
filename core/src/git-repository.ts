@@ -4,7 +4,7 @@ import * as path from 'path';
 import { GitInfo, CommitHistoryEntry, BlameEntry } from './types';
 
 /**
- * GitRepository - Handles all Git operations for CxtManager
+ * GitRepository - Handles all Git operations for cxt-manager
  * Implements Git-like commands and ensures .cxt/ folder is tracked
  */
 export class GitRepository {
@@ -44,53 +44,49 @@ export class GitRepository {
   }
 
   /**
-   * Get current Git user configuration
+   * Check if Git user is configured (both name and email)
+   * Throws an error with helpful message if not configured
    */
-  async getGitUser(): Promise<{ name: string; email: string; usedFallback: boolean }> {
+  async ensureGitUserConfigured(): Promise<void> {
+    let name: string | null = null;
+    let email: string | null = null;
+    
+    // Try to get user.name from local config, then global
     try {
-      let name: string | null = null;
-      let email: string | null = null;
-      
-      // Try to get user.name from local config, then global
+      const nameConfig = await this.git.getConfig('user.name', 'local');
+      name = nameConfig.value || null;
+    } catch {
       try {
-        const nameConfig = await this.git.getConfig('user.name', 'local');
+        const nameConfig = await this.git.getConfig('user.name', 'global');
         name = nameConfig.value || null;
       } catch {
-        try {
-          const nameConfig = await this.git.getConfig('user.name', 'global');
-          name = nameConfig.value || null;
-        } catch {
-          name = null;
-        }
+        name = null;
       }
-      
-      // Try to get user.email from local config, then global
+    }
+    
+    // Try to get user.email from local config, then global
+    try {
+      const emailConfig = await this.git.getConfig('user.email', 'local');
+      email = emailConfig.value || null;
+    } catch {
       try {
-        const emailConfig = await this.git.getConfig('user.email', 'local');
+        const emailConfig = await this.git.getConfig('user.email', 'global');
         email = emailConfig.value || null;
       } catch {
-        try {
-          const emailConfig = await this.git.getConfig('user.email', 'global');
-          email = emailConfig.value || null;
-        } catch {
-          email = null;
-        }
+        email = null;
       }
-      
-      const usedFallback = !name || !email;
-      
-      return {
-        name: name || 'CxtManager',
-        email: email || 'noreply@cxtmanager.dev',
-        usedFallback
-      };
-    } catch {
-      // Fallback if we can't get Git config
-      return {
-        name: 'CxtManager',
-        email: 'noreply@cxtmanager.dev',
-        usedFallback: true
-      };
+    }
+    
+    if (!name || !email) {
+      throw new Error(
+        'Git user information not configured.\n' +
+        '  💡 Configure your Git user to enable commits:\n' +
+        '     git config --global user.name "Your Name"\n' +
+        '     git config --global user.email "your.email@example.com"\n' +
+        '  💡 Or configure locally for this repository:\n' +
+        '     git config user.name "Your Name"\n' +
+        '     git config user.email "your.email@example.com"'
+      );
     }
   }
 
@@ -113,47 +109,37 @@ export class GitRepository {
       // Add files to staging
       await this.git.add(fileArray);
       
-      // Create commit with optional author attribution
-      if (author) {
-        // If author is provided but not in proper format, try to format it
-        let authorString = author;
-        let usedFallback = false;
-        
-        // Check if author is already in "Name <email>" format
-        if (!author.includes('<') || !author.includes('>')) {
-          // If it's just a name, get current Git user and use their email
-          // Or use a properly formatted fallback
-          if (author === 'CxtManager Init' || author === 'CxtManager') {
-            const gitUser = await this.getGitUser();
-            authorString = `${gitUser.name} <${gitUser.email}>`;
-            usedFallback = gitUser.usedFallback;
-          } else {
-            // Try to get current Git user email for the provided name
-            const gitUser = await this.getGitUser();
-            authorString = `${author} <${gitUser.email}>`;
-            usedFallback = gitUser.usedFallback;
-          }
-        }
-        
-        // Warn if we're using fallback Git user info
-        if (usedFallback) {
-          console.warn('');
-          console.warn('⚠️  Warning: Git user information not configured');
-          console.warn('   Using fallback author: CxtManager <noreply@cxtmanager.dev>');
-          console.warn('   To get accurate git blame, configure your Git user:');
-          console.warn('     git config --global user.name "Your Name"');
-          console.warn('     git config --global user.email "your.email@example.com"');
-          console.warn('');
-        }
-        
+      // Create commit - let Git use its configured user.name and user.email
+      // If author is provided and in proper format, use it; otherwise let Git handle it
+      if (author && author.includes('<') && author.includes('>')) {
+        // Author is already in proper "Name <email>" format
         await this.git.commit(message, undefined, {
-          '--author': authorString
+          '--author': author
         });
       } else {
+        // No author override - Git will use configured user.name and user.email
+        // Check Git user config first to provide helpful error message
+        await this.ensureGitUserConfigured();
         await this.git.commit(message);
       }
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : String(error);
+      
+      // Check for Git user configuration errors
+      if (errorMessage.includes('user.name') || errorMessage.includes('user.email') || 
+          errorMessage.includes('Author identity unknown') || 
+          errorMessage.includes('Please tell me who you are')) {
+        throw new Error(
+          'Git user information not configured.\n' +
+          '  💡 Configure your Git user to enable commits:\n' +
+          '     git config --global user.name "Your Name"\n' +
+          '     git config --global user.email "your.email@example.com"\n' +
+          '  💡 Or configure locally for this repository:\n' +
+          '     git config user.name "Your Name"\n' +
+          '     git config user.email "your.email@example.com"'
+        );
+      }
+      
       if (errorMessage.includes('EACCES') || errorMessage.includes('permission denied')) {
         throw new Error(
           'Permission denied. Cannot write to Git repository.\n' +
@@ -161,6 +147,7 @@ export class GitRepository {
           '  💡 Ensure you have write access to .git/ directory'
         );
       }
+      
       if (errorMessage.includes('not a git repository')) {
         throw new Error(
           'Not a Git repository.\n' +
@@ -168,6 +155,7 @@ export class GitRepository {
           '  💡 Or run "cit init" which will initialize Git automatically'
         );
       }
+      
       if (errorMessage.includes('--author') && errorMessage.includes('not')) {
         // Handle author format errors more gracefully
         // Try committing without author override, using Git's default user
@@ -365,17 +353,72 @@ export class GitRepository {
   }
 
   private parseBlameOutput(blameText: string): BlameEntry[] {
-    // TODO: Implement proper blame parsing
-    // This is a simplified version - full implementation would parse the porcelain format
+    // Parse git blame porcelain format
+    // Format: <commit-hash> <line-number> <line-number>
+    //         author <author-name>
+    //         author-mail <author-email>
+    //         author-time <timestamp>
+    //         summary <commit-message>
+    //         filename <file-path>
+    //                 <line-content>
+    
+    const entries: BlameEntry[] = [];
     const lines = blameText.split('\n');
-    return lines.map((line, index): BlameEntry => ({
-      line: index + 1,
-      content: line,
-      author: 'unknown',
-      email: 'unknown',
-      hash: 'unknown',
-      date: new Date()
-    }));
+    
+    let currentCommit: {
+      hash: string;
+      author: string;
+      email: string;
+      timestamp: number;
+    } | null = null;
+    
+    let lineNumber = 0;
+    
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+      
+      // Check if this is a commit header line: <hash> <start-line> <end-line>
+      const commitHeaderMatch = line.match(/^([a-f0-9]{40})\s+(\d+)\s+(\d+)/);
+      if (commitHeaderMatch) {
+        currentCommit = {
+          hash: commitHeaderMatch[1],
+          author: '',
+          email: '',
+          timestamp: 0
+        };
+        lineNumber = parseInt(commitHeaderMatch[2], 10);
+        continue;
+      }
+      
+      // Parse commit metadata
+      if (currentCommit) {
+        if (line.startsWith('author ')) {
+          currentCommit.author = line.substring(7).trim();
+        } else if (line.startsWith('author-mail ')) {
+          // Remove < > brackets from email
+          const email = line.substring(12).trim();
+          currentCommit.email = email.replace(/^<|>$/g, '');
+        } else if (line.startsWith('author-time ')) {
+          currentCommit.timestamp = parseInt(line.substring(12).trim(), 10);
+        } else if (line.startsWith('\t')) {
+          // Line content starts with tab
+          const content = line.substring(1);
+          entries.push({
+            line: lineNumber,
+            hash: currentCommit.hash,
+            author: currentCommit.author || 'unknown',
+            email: currentCommit.email || 'unknown',
+            date: currentCommit.timestamp > 0 
+              ? new Date(currentCommit.timestamp * 1000) 
+              : new Date(),
+            content: content
+          });
+          lineNumber++;
+        }
+      }
+    }
+    
+    return entries;
   }
 
   /**
@@ -406,7 +449,7 @@ build/
 .DS_Store
 Thumbs.db
 
-${trackInGit ? '# CxtManager: Track .cxt/ folder - this is important!\n# .cxt/ folder should be committed to share context with team' : '# CxtManager: .cxt/ folder is private (not tracked in Git)\n.cxt/'}
+${trackInGit ? '# cxt-manager: Track .cxt/ folder - this is important!\n# .cxt/ folder should be committed to share context with team' : '# cxt-manager: .cxt/ folder is private (not tracked in Git)\n.cxt/'}
 `;
 
     if (!await fs.pathExists(gitignorePath)) {
@@ -416,21 +459,21 @@ ${trackInGit ? '# CxtManager: Track .cxt/ folder - this is important!\n# .cxt/ f
       const hasCxtIgnore = gitignore.includes('.cxt/') || gitignore.includes('.cxt');
       
       if (trackInGit && hasCxtIgnore) {
-        // Remove .cxt/ from gitignore if it exists (only CxtManager entries)
+        // Remove .cxt/ from gitignore if it exists (only cxt-manager entries)
         const lines = gitignore.split('\n');
         const updated = lines
           .filter((line, index) => {
             // Remove lines that are .cxt/ or .cxt (with or without comment)
             const trimmed = line.trim();
             if (trimmed === '.cxt/' || trimmed === '.cxt' || trimmed.startsWith('.cxt/') || trimmed.startsWith('.cxt ')) {
-              // Also remove preceding CxtManager comment if present
-              if (index > 0 && lines[index - 1].includes('CxtManager')) {
+              // Also remove preceding cxt-manager comment if present
+              if (index > 0 && (lines[index - 1].includes('CxtManager') || lines[index - 1].includes('cxt-manager'))) {
                 return false; // Remove comment line too
               }
               return false;
             }
-            // Remove CxtManager comment lines about .cxt/
-            if (trimmed.includes('CxtManager') && (trimmed.includes('.cxt/') || trimmed.includes('.cxt'))) {
+            // Remove cxt-manager comment lines about .cxt/
+            if ((trimmed.includes('CxtManager') || trimmed.includes('cxt-manager')) && (trimmed.includes('.cxt/') || trimmed.includes('.cxt'))) {
               return false;
             }
             return true;
@@ -440,7 +483,7 @@ ${trackInGit ? '# CxtManager: Track .cxt/ folder - this is important!\n# .cxt/ f
         console.log('✅ Removed .cxt/ from .gitignore (context will be tracked in Git)');
       } else if (!trackInGit && !hasCxtIgnore) {
         // Add .cxt/ to gitignore
-        const updated = gitignore.trim() + '\n\n# CxtManager: .cxt/ folder is private (not tracked in Git)\n.cxt/\n';
+        const updated = gitignore.trim() + '\n\n# cxt-manager: .cxt/ folder is private (not tracked in Git)\n.cxt/\n';
         await fs.writeFile(gitignorePath, updated);
         console.log('✅ Added .cxt/ to .gitignore (context will remain private)');
       }

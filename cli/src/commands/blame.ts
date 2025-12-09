@@ -3,9 +3,8 @@ import chalk from 'chalk';
 import { ContextManager } from '@cxtmanager/core';
 
 export const blameCommand = new Command('blame')
-  .description('Show context file attribution with AI/Human/Code-triggered/External breakdown')
+  .description('Show context file line-by-line attribution (author, date, commit)')
   .argument('<file>', 'Context file to analyze (context.md, plan.md, guardrail.md)')
-  .option('--by-source', 'Group by attribution source')
   .option('--timeline', 'Show chronological evolution')
   .option('--diff <commit>', 'Show changes since commit')
   .action(async (file, options) => {
@@ -13,7 +12,7 @@ export const blameCommand = new Command('blame')
       const manager = new ContextManager();
       
       if (!await manager.isInitialized()) {
-        console.log(chalk.red('❌ CxtManager not initialized'));
+        console.log(chalk.red('❌ cxt-manager not initialized'));
         console.log(chalk.yellow('💡 Run "cit init" to get started'));
         return;
       }
@@ -34,9 +33,7 @@ export const blameCommand = new Command('blame')
       const gitRepo = (manager as any).gitRepo;
       const blameInfo = await gitRepo.blame(filePath);
 
-      if (options.bySource) {
-        await showAttributionBySource(blameInfo, file);
-      } else if (options.timeline) {
+      if (options.timeline) {
         await showTimelineView(gitRepo, filePath);
       } else if (options.diff) {
         await showDiffView(gitRepo, filePath, options.diff);
@@ -72,39 +69,36 @@ async function showDetailedBlame(blameInfo: any[], file: string) {
   console.log(chalk.bold('📝 Line-by-line attribution:'));
   console.log('');
   
-  // This is a simplified version - in real implementation we'd parse actual git blame
-  blameInfo.slice(0, 10).forEach((line, index) => {
-    const lineNum = (index + 1).toString().padStart(3, ' ');
-    const attribution = getAttributionIcon('human'); // Placeholder
-    console.log(chalk.gray(`${lineNum}│`) + ` ${attribution} ${line.content?.slice(0, 80) || 'Line content'}`);
+  if (blameInfo.length === 0) {
+    console.log(chalk.gray('No blame information available'));
+    return;
+  }
+  
+  blameInfo.slice(0, 20).forEach((entry) => {
+    const lineNum = entry.line.toString().padStart(3, ' ');
+    const author = entry.author || 'unknown';
+    const email = entry.email || 'unknown';
+    const hash = entry.hash ? entry.hash.slice(0, 7) : 'unknown';
+    const date = entry.date ? new Date(entry.date).toLocaleDateString() : 'unknown';
+    const content = entry.content || '';
+    
+    console.log(
+      chalk.gray(`${lineNum}│`) + 
+      ` ${chalk.blue(author.padEnd(20))}` +
+      ` ${chalk.gray(hash)}` +
+      ` ${chalk.gray(date.padEnd(12))}` +
+      ` ${content.slice(0, 60)}`
+    );
   });
   
-  if (blameInfo.length > 10) {
-    console.log(chalk.gray(`... and ${blameInfo.length - 10} more lines`));
+  if (blameInfo.length > 20) {
+    console.log(chalk.gray(`... and ${blameInfo.length - 20} more lines`));
   }
+  
+  console.log('');
+  console.log(chalk.gray('💡 Use --timeline to see chronological evolution'));
 }
 
-async function showAttributionBySource(blameInfo: any[], file: string) {
-  console.log(chalk.bold('📊 Attribution by source:'));
-  console.log('');
-  
-  // Mock data - in real implementation we'd analyze actual attribution
-  const breakdown = {
-    'AI Decisions': 45,
-    'Human Edits': 35,
-    'Code-Triggered': 15,
-    'External Sync': 5
-  };
-  
-  Object.entries(breakdown).forEach(([source, percentage]) => {
-    const icon = getAttributionIcon(source.toLowerCase());
-    const bar = '█'.repeat(Math.floor(percentage / 5));
-    console.log(`${icon} ${source.padEnd(16)} ${percentage}% ${chalk.blue(bar)}`);
-  });
-  
-  console.log('');
-  console.log(chalk.gray('💡 Run "cit blame --timeline" to see chronological evolution'));
-}
 
 async function showTimelineView(gitRepo: any, filePath: string) {
   console.log(chalk.bold('📅 Chronological evolution:'));
@@ -138,22 +132,3 @@ async function showDiffView(gitRepo: any, filePath: string, fromCommit: string) 
     console.log(chalk.gray('No changes since specified commit'));
   }
 }
-
-function getAttributionIcon(source: string): string {
-  switch (source.toLowerCase()) {
-    case 'ai':
-    case 'ai decisions':
-      return '🧠';
-    case 'human':
-    case 'human edits':
-      return '👨‍💻';
-    case 'code':
-    case 'code-triggered':
-      return '🔄';
-    case 'external':
-    case 'external sync':
-      return '🌐';
-    default:
-      return '❓';
-  }
-} 

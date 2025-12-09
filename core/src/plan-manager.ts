@@ -160,8 +160,8 @@ export class PlanManager {
       }
     }
 
-    // Save current plan if we're switching from a different branch
-    if (previousBranch !== currentBranch && previousBranch) {
+    // Save current plan if we're switching from a different branch and backup is enabled
+    if (previousBranch !== currentBranch && previousBranch && this.config.plan_management?.backup_on_switch !== false) {
       await this.saveCurrentPlan(previousBranch);
     }
 

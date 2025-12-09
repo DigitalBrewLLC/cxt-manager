@@ -58,7 +58,7 @@ export const syncPlanCommand = new Command('sync-plan')
           console.log(chalk.yellow('💡 Ensure you have write access to .cxt/ directory'));
         } else if (error.message.includes('ENOENT') || error.message.includes('no such file')) {
           console.error(chalk.red('❌ .cxt/ folder not found'));
-          console.log(chalk.yellow('💡 Run "cit init" to initialize CxtManager'));
+          console.log(chalk.yellow('💡 Run "cit init" to initialize cxt-manager'));
         } else {
           console.error(chalk.red('❌ Failed to sync plan:'), error.message);
         }

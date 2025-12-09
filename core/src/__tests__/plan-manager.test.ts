@@ -41,22 +41,9 @@ describe('PlanManager', () => {
       },
       plan_management: {
         backup_on_switch: true,
-        auto_commit_ai_changes: false,
-        archive_completed: false
-      },
-      mcp: {
-        enabled: false,
-        sources: {
-          local_files: {
-            enabled: true,
-            readme: true,
-            package_json: true,
-            git_history: true
-          }
-        }
+        // auto_commit_ai_changes and archive_completed removed
       },
       context: {
-        auto_sync: false,
         health_checks: true,
         ai_attribution: true,
         drift_detection: true,
@@ -66,9 +53,7 @@ describe('PlanManager', () => {
           min_content_lines: 3,
           empty_section_warning: true,
           short_content_warning: 200
-        },
-        show_in_changed_files: true,
-        auto_commit_context_updates: false
+        }
       },
       created: new Date().toISOString()
     };
@@ -157,6 +142,83 @@ describe('PlanManager', () => {
       expect(content).toContain('# Current Branch Implementation');
       expect(content).toContain('GUIDANCE');
       expect(content).toContain('##');
+    });
+  });
+
+  describe('syncPlan - backup_on_switch', () => {
+    it('should backup plan when backup_on_switch is true', async () => {
+      config.plan_management!.backup_on_switch = true;
+      manager = new PlanManager(path.join(testDir, '.cxt'), gitRepo, config);
+      
+      // Create initial plan
+      await manager.createBlankPlan();
+      const planPath = path.join(testDir, '.cxt', 'plan.md');
+      await fs.writeFile(planPath, '# Test Plan\n\nInitial content');
+      
+      // Create state file to simulate branch switch
+      const statePath = path.join(testDir, '.cxt', '.plan-state.json');
+      await fs.writeJson(statePath, { lastBranch: 'feature-branch' });
+      
+      // Switch to new branch (simulated)
+      const { execSync } = require('child_process');
+      execSync('git checkout -b main', { cwd: testDir });
+      
+      await manager.syncPlan({ silent: true });
+      
+      // Plan should be backed up
+      const backupPath = path.join(testDir, '.cxt', '.plan-history', 'feature-branch.md');
+      expect(await fs.pathExists(backupPath)).toBe(true);
+      
+      const backupContent = await fs.readFile(backupPath, 'utf-8');
+      expect(backupContent).toContain('Initial content');
+    });
+
+    it('should not backup plan when backup_on_switch is false', async () => {
+      config.plan_management!.backup_on_switch = false;
+      manager = new PlanManager(path.join(testDir, '.cxt'), gitRepo, config);
+      
+      // Create initial plan
+      await manager.createBlankPlan();
+      const planPath = path.join(testDir, '.cxt', 'plan.md');
+      await fs.writeFile(planPath, '# Test Plan\n\nInitial content');
+      
+      // Create state file to simulate branch switch
+      const statePath = path.join(testDir, '.cxt', '.plan-state.json');
+      await fs.writeJson(statePath, { lastBranch: 'feature-branch' });
+      
+      // Switch to new branch (simulated)
+      const { execSync } = require('child_process');
+      execSync('git checkout -b main', { cwd: testDir });
+      
+      await manager.syncPlan({ silent: true });
+      
+      // Plan should NOT be backed up
+      const backupPath = path.join(testDir, '.cxt', '.plan-history', 'feature-branch.md');
+      expect(await fs.pathExists(backupPath)).toBe(false);
+    });
+
+    it('should backup plan when backup_on_switch is undefined (defaults to true)', async () => {
+      config.plan_management!.backup_on_switch = undefined as any;
+      manager = new PlanManager(path.join(testDir, '.cxt'), gitRepo, config);
+      
+      // Create initial plan
+      await manager.createBlankPlan();
+      const planPath = path.join(testDir, '.cxt', 'plan.md');
+      await fs.writeFile(planPath, '# Test Plan\n\nInitial content');
+      
+      // Create state file to simulate branch switch
+      const statePath = path.join(testDir, '.cxt', '.plan-state.json');
+      await fs.writeJson(statePath, { lastBranch: 'feature-branch' });
+      
+      // Switch to new branch (simulated)
+      const { execSync } = require('child_process');
+      execSync('git checkout -b main', { cwd: testDir });
+      
+      await manager.syncPlan({ silent: true });
+      
+      // Plan should be backed up (default behavior)
+      const backupPath = path.join(testDir, '.cxt', '.plan-history', 'feature-branch.md');
+      expect(await fs.pathExists(backupPath)).toBe(true);
     });
   });
 });

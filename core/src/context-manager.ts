@@ -84,10 +84,11 @@ export class ContextManager {
 
       // Initial Git commit (only if tracking in Git)
       if (trackInGit) {
+        // Check Git user config before attempting commit
+        await this.gitRepo.ensureGitUserConfigured();
         await this.gitRepo.addAndCommit(
           ['.cxt/'],
-          `feat: initialize CxtManager with ${options.mode} mode\n\nCreated context files: context.md, plan.md, guardrail.md`,
-          'CxtManager Init'
+          `feat: initialize cxt-manager with ${options.mode} mode\n\nCreated context files: context.md, plan.md, guardrail.md`
         );
       }
     } catch (error: unknown) {
@@ -162,11 +163,30 @@ export class ContextManager {
   async loadConfig(): Promise<CxtConfig> {
     if (!this.config) {
       if (!await fs.pathExists(this.configPath)) {
-        throw new Error('Configuration file not found');
+        throw new Error(
+          'Configuration file not found.\n' +
+          '  💡 Run "cit init" to initialize cxt-manager'
+        );
       }
       
-      const configData = await fs.readJson(this.configPath);
-      this.config = configData as CxtConfig;
+      try {
+        const configData = await fs.readJson(this.configPath);
+        this.config = configData as CxtConfig;
+      } catch (error: unknown) {
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        if (errorMessage.includes('Unexpected token') || errorMessage.includes('JSON')) {
+          throw new Error(
+            'Configuration file is corrupted or invalid JSON.\n' +
+            '  💡 Check .cxt/.cxtconfig.json for syntax errors\n' +
+            '  💡 Or run "cit init" to reinitialize (this will overwrite existing config)'
+          );
+        }
+        throw new Error(
+          `Failed to load configuration: ${errorMessage}\n` +
+          '  💡 Check .cxt/.cxtconfig.json for issues\n' +
+          '  💡 Or run "cit init" to reinitialize'
+        );
+      }
     }
     
     if (!this.config) {
@@ -530,23 +550,11 @@ export class ContextManager {
       },
       plan_management: {
         backup_on_switch: true,
-        plan_template_style: undefined, // Will default to config.mode (blank or template)
-        auto_commit_ai_changes: true,
-        archive_completed: false
-      },
-      mcp: {
-        enabled: false,
-        sources: {
-          local_files: {
-            enabled: true,
-            readme: true,
-            package_json: true,
-            git_history: true
-          }
-        }
+        plan_template_style: options.mode // Defaults to init mode (blank or template)
+        // auto_commit_ai_changes: Removed - conflicts with "Manager, not Enforcer" philosophy
+        // archive_completed: Removed - not implemented
       },
       context: {
-        auto_sync: false,
         health_checks: true,
         ai_attribution: true,
         drift_detection: true,
@@ -556,9 +564,10 @@ export class ContextManager {
           min_content_lines: 3,
           empty_section_warning: true,
           short_content_warning: 200
-        },
-        show_in_changed_files: true,
-        auto_commit_context_updates: false
+        }
+        // auto_sync: Removed - not implemented
+        // show_in_changed_files: Removed - not implemented
+        // auto_commit_context_updates: Removed - conflicts with "Manager, not Enforcer" philosophy
       },
       created: new Date().toISOString()
     };

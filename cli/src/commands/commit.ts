@@ -32,9 +32,9 @@ export const commitCommand = new Command('commit')
         message = answers.message;
       }
 
-      // Validate context alignment before commit (unless --no-verify)
+      // Validate context health before commit (unless --no-verify)
       if (options.verify !== false) {
-        console.log(chalk.blue('🔍 Validating context alignment before commit...'));
+        console.log(chalk.blue('🔍 Validating context health before commit...'));
         const health = await manager.validate();
         
         if (health.overall === 'error') {

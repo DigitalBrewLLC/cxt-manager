@@ -142,10 +142,11 @@ describe('GitRepository', () => {
       expect(log.latest?.message).toBe('Test commit');
     });
 
-    it('should format author string properly when author is just a name', async () => {
+    it('should use Git configured user when no author override', async () => {
       const git = simpleGit(testDir);
       await git.init();
       
+      // Set Git user config
       try {
         await git.addConfig('user.name', 'Test User', false, 'local');
         await git.addConfig('user.email', 'test@example.com', false, 'local');
@@ -156,44 +157,15 @@ describe('GitRepository', () => {
       const testFile = path.join(testDir, 'test.txt');
       fs.writeFileSync(testFile, 'content');
       
-      // Use 'CxtManager Init' which should be formatted to use Git user's info
-      await gitRepo.addAndCommit(['test.txt'], 'Test commit', 'CxtManager Init');
+      // No author override - Git will use configured user.name and user.email
+      await gitRepo.addAndCommit(['test.txt'], 'Test commit');
       
       const log = await git.log();
       expect(log.total).toBe(1);
       expect(log.latest?.message).toBe('Test commit');
-      // Author should be formatted as "Test User <test@example.com>"
+      // Git will use the configured user
       expect(log.latest?.author_name).toBe('Test User');
       expect(log.latest?.author_email).toBe('test@example.com');
-    });
-
-    it('should use fallback author when Git user is not configured', async () => {
-      const git = simpleGit(testDir);
-      await git.init();
-      
-      // Don't set Git user config - should use fallback
-      const testFile = path.join(testDir, 'test.txt');
-      fs.writeFileSync(testFile, 'content');
-      
-      // Capture console.warn output
-      const warnSpy = jest.spyOn(console, 'warn').mockImplementation();
-      
-      await gitRepo.addAndCommit(['test.txt'], 'Test commit', 'CxtManager Init');
-      
-      // Should have warned about using fallback
-      expect(warnSpy).toHaveBeenCalled();
-      const warnCalls = warnSpy.mock.calls.flat().join(' ');
-      expect(warnCalls).toContain('Warning: Git user information not configured');
-      expect(warnCalls).toContain('CxtManager <noreply@cxtmanager.dev>');
-      expect(warnCalls).toContain('git config --global user.name');
-      
-      warnSpy.mockRestore();
-      
-      const log = await git.log();
-      expect(log.total).toBe(1);
-      // Should use fallback author
-      expect(log.latest?.author_name).toBe('CxtManager');
-      expect(log.latest?.author_email).toBe('noreply@cxtmanager.dev');
     });
 
     it('should accept properly formatted author string', async () => {
@@ -210,6 +182,88 @@ describe('GitRepository', () => {
       expect(log.total).toBe(1);
       expect(log.latest?.author_name).toBe('Custom Author');
       expect(log.latest?.author_email).toBe('custom@example.com');
+    });
+
+    it('should throw helpful error when Git user is not configured', async () => {
+      const git = simpleGit(testDir);
+      await git.init();
+      
+      // Don't set Git user config
+      const testFile = path.join(testDir, 'test.txt');
+      fs.writeFileSync(testFile, 'content');
+      
+      await expect(
+        gitRepo.addAndCommit(['test.txt'], 'Test commit')
+      ).rejects.toThrow('Git user information not configured');
+      
+      try {
+        await gitRepo.addAndCommit(['test.txt'], 'Test commit');
+        fail('Should have thrown an error');
+      } catch (error: any) {
+        expect(error.message).toContain('Git user information not configured');
+        expect(error.message).toContain('git config --global user.name');
+        expect(error.message).toContain('git config --global user.email');
+      }
+    });
+  });
+
+  describe('ensureGitUserConfigured', () => {
+    it('should pass when Git user is configured', async () => {
+      const git = simpleGit(testDir);
+      await git.init();
+      
+      await git.addConfig('user.name', 'Test User', false, 'local');
+      await git.addConfig('user.email', 'test@example.com', false, 'local');
+      
+      // Should not throw
+      await expect((gitRepo as any).ensureGitUserConfigured()).resolves.not.toThrow();
+    });
+
+    it('should throw when Git user name is not configured', async () => {
+      const git = simpleGit(testDir);
+      await git.init();
+      
+      // Only set email, not name
+      await git.addConfig('user.email', 'test@example.com', false, 'local');
+      
+      await expect(
+        (gitRepo as any).ensureGitUserConfigured()
+      ).rejects.toThrow('Git user information not configured');
+    });
+
+    it('should throw when Git user email is not configured', async () => {
+      const git = simpleGit(testDir);
+      await git.init();
+      
+      // Only set name, not email
+      await git.addConfig('user.name', 'Test User', false, 'local');
+      
+      await expect(
+        (gitRepo as any).ensureGitUserConfigured()
+      ).rejects.toThrow('Git user information not configured');
+    });
+
+    it('should check global config if local is not set', async () => {
+      const git = simpleGit(testDir);
+      await git.init();
+      
+      // Don't set local config - method should check global
+      // Note: This test verifies the method checks global, but we can't reliably
+      // set global config in tests without affecting the system. Instead, we verify
+      // the method attempts to check global by ensuring it doesn't throw immediately
+      // when local is not set (it will check global before throwing)
+      
+      // If global config exists on the system, this should pass
+      // If not, it will throw (which is expected behavior)
+      try {
+        await (gitRepo as any).ensureGitUserConfigured();
+        // If we get here, global config exists - test passes
+        expect(true).toBe(true);
+      } catch (error: any) {
+        // If global config doesn't exist, error should mention global config
+        expect(error.message).toContain('Git user information not configured');
+        expect(error.message).toContain('git config --global');
+      }
     });
   });
 

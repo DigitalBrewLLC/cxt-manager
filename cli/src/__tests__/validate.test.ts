@@ -91,11 +91,8 @@ describe('validate command', () => {
         overall: 'healthy',
         lastChecked: new Date(),
         issues: [],
-        suggestions: [],
-        alignments: {
-          contextToPlan: 'aligned',
-          allToGuardrails: 'aligned'
-        }
+        suggestions: []
+        // alignments is optional - reserved for future MCP/agent integration
       };
       mockManager.validate.mockResolvedValue(mockHealth);
 
@@ -116,11 +113,8 @@ describe('validate command', () => {
             autoFixable: false
           } as HealthIssue
         ],
-        suggestions: [],
-        alignments: {
-          contextToPlan: 'conflict',
-          allToGuardrails: 'aligned'
-        }
+        suggestions: []
+        // alignments is optional - reserved for future MCP/agent integration
       };
       mockManager.validate.mockResolvedValue(mockHealth);
 
@@ -141,11 +135,8 @@ describe('validate command', () => {
         overall: 'healthy',
         lastChecked: new Date(),
         issues: [],
-        suggestions: [],
-        alignments: {
-          contextToPlan: 'aligned',
-          allToGuardrails: 'aligned'
-        }
+        suggestions: []
+        // alignments is optional - reserved for future MCP/agent integration
       };
       mockManager.validate.mockResolvedValue(mockHealth);
 

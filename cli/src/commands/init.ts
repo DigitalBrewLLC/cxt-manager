@@ -155,7 +155,7 @@ export const initCommand = new Command('init')
       console.log(chalk.gray('  💡 You can change this later in .cxt/.cxtconfig.json'));
       console.log('');
 
-      const spinner = ora('Initializing CxtManager...').start();
+      const spinner = ora('Initializing cxt-manager...').start();
       spinner.text = `Initializing with mode: ${mode}`;
 
       // Add trackInGit to init options
@@ -193,16 +193,16 @@ export const initCommand = new Command('init')
           if (installedHooks.length > 0) {
             hooksInstalled = true;
             if (hasExistingHooks) {
-              spinner.succeed('CxtManager initialized successfully! Git hooks added to existing hooks');
+              spinner.succeed('cxt-manager initialized successfully! Git hooks added to existing hooks');
             } else {
-              spinner.succeed(`CxtManager initialized successfully! Git hooks installed (${installedHooks.join(', ')})`);
+              spinner.succeed(`cxt-manager initialized successfully! Git hooks installed (${installedHooks.join(', ')})`);
             }
           } else {
-            spinner.succeed('CxtManager initialized successfully!');
+            spinner.succeed('cxt-manager initialized successfully!');
           }
         } catch (error: any) {
           // Don't fail init if hooks fail to install
-          spinner.succeed('CxtManager initialized successfully!');
+          spinner.succeed('cxt-manager initialized successfully!');
           console.log(chalk.yellow(`⚠️  Warning: Could not install git hooks: ${error.message}`));
           console.log(chalk.gray('   You can install them manually with: cit hooks install'));
         }
@@ -237,13 +237,13 @@ export const initCommand = new Command('init')
       console.log('');
       console.log(chalk.bold('🚀 Useful commands:'));
       console.log(chalk.yellow('   cit status           - Check context health and see what needs attention'));
-      console.log(chalk.yellow('   cit validate         - Verify file alignment'));
+      console.log(chalk.yellow('   cit validate         - Check context file health'));
       console.log(chalk.yellow('   cit log              - View context file history'));
       
       if (mode === 'template') {
         console.log('');
         console.log(chalk.blue('💡 The context files contain helpful comments explaining what to fill in.'));
-        console.log(chalk.blue('   Edit them to document your project - CxtManager manages the files, you provide the content.'));
+        console.log(chalk.blue('   Edit them to document your project - cxt-manager manages the files, you provide the content.'));
       } else {
         console.log('');
         console.log(chalk.blue('💡 Review and edit the generated context files.'));
@@ -251,7 +251,7 @@ export const initCommand = new Command('init')
       }
 
     } catch (error: any) { // TODO: Properly type error instead of using any
-      ora().fail('Failed to initialize CxtManager');
+      ora().fail('Failed to initialize cxt-manager');
       console.error(chalk.red('❌'), error.message);
       if (process.env.DEBUG) {
         console.error(error.stack);
