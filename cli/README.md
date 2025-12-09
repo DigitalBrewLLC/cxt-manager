@@ -134,5 +134,7 @@ node dist/cli.js
 
 ## License
 
-AGPL-3.0
+MIT License
+
+Copyright (c) 2025 Digital Brew LLC
 
