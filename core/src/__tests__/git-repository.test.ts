@@ -141,6 +141,77 @@ describe('GitRepository', () => {
       expect(log.total).toBe(1);
       expect(log.latest?.message).toBe('Test commit');
     });
+
+    it('should format author string properly when author is just a name', async () => {
+      const git = simpleGit(testDir);
+      await git.init();
+      
+      try {
+        await git.addConfig('user.name', 'Test User', false, 'local');
+        await git.addConfig('user.email', 'test@example.com', false, 'local');
+      } catch {
+        // Ignore config errors
+      }
+      
+      const testFile = path.join(testDir, 'test.txt');
+      fs.writeFileSync(testFile, 'content');
+      
+      // Use 'CxtManager Init' which should be formatted to use Git user's info
+      await gitRepo.addAndCommit(['test.txt'], 'Test commit', 'CxtManager Init');
+      
+      const log = await git.log();
+      expect(log.total).toBe(1);
+      expect(log.latest?.message).toBe('Test commit');
+      // Author should be formatted as "Test User <test@example.com>"
+      expect(log.latest?.author_name).toBe('Test User');
+      expect(log.latest?.author_email).toBe('test@example.com');
+    });
+
+    it('should use fallback author when Git user is not configured', async () => {
+      const git = simpleGit(testDir);
+      await git.init();
+      
+      // Don't set Git user config - should use fallback
+      const testFile = path.join(testDir, 'test.txt');
+      fs.writeFileSync(testFile, 'content');
+      
+      // Capture console.warn output
+      const warnSpy = jest.spyOn(console, 'warn').mockImplementation();
+      
+      await gitRepo.addAndCommit(['test.txt'], 'Test commit', 'CxtManager Init');
+      
+      // Should have warned about using fallback
+      expect(warnSpy).toHaveBeenCalled();
+      const warnCalls = warnSpy.mock.calls.flat().join(' ');
+      expect(warnCalls).toContain('Warning: Git user information not configured');
+      expect(warnCalls).toContain('CxtManager <noreply@cxtmanager.dev>');
+      expect(warnCalls).toContain('git config --global user.name');
+      
+      warnSpy.mockRestore();
+      
+      const log = await git.log();
+      expect(log.total).toBe(1);
+      // Should use fallback author
+      expect(log.latest?.author_name).toBe('CxtManager');
+      expect(log.latest?.author_email).toBe('noreply@cxtmanager.dev');
+    });
+
+    it('should accept properly formatted author string', async () => {
+      const git = simpleGit(testDir);
+      await git.init();
+      
+      const testFile = path.join(testDir, 'test.txt');
+      fs.writeFileSync(testFile, 'content');
+      
+      // Use properly formatted author string
+      await gitRepo.addAndCommit(['test.txt'], 'Test commit', 'Custom Author <custom@example.com>');
+      
+      const log = await git.log();
+      expect(log.total).toBe(1);
+      expect(log.latest?.author_name).toBe('Custom Author');
+      expect(log.latest?.author_email).toBe('custom@example.com');
+    });
   });
+
 });
 

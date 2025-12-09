@@ -99,17 +99,10 @@ export const validateCommand = new Command('validate')
         console.log(chalk.green('✅ All context files are well-aligned!'));
         console.log(chalk.gray('   Your AI assistants can confidently reference these files.'));
       } else {
-        const autoFixableCount = health.issues.filter((i: HealthIssue) => i.autoFixable).length;
-        
-        if (autoFixableCount > 0) {
-          console.log(chalk.yellow(`🔧 ${autoFixableCount} issues can be fixed automatically:`));
-          console.log(chalk.blue('   cit auto-heal --dry-run    # Preview fixes'));
-          console.log(chalk.blue('   cit auto-heal              # Apply fixes'));
-        }
-        
-        const manualCount = health.issues.filter((i: HealthIssue) => !i.autoFixable).length;
-        if (manualCount > 0) {
-          console.log(chalk.yellow(`✏️  ${manualCount} issues need manual attention.`));
+        const issueCount = health.issues.length;
+        if (issueCount > 0) {
+          console.log(chalk.yellow(`✏️  ${issueCount} issue(s) found. Review and update your context files as needed.`));
+          console.log(chalk.blue('   Your AI assistant can help you update these files based on the suggestions above.'));
         }
       }
 

@@ -98,7 +98,7 @@ async function showFullLog(gitRepo: any, maxCount: number, oneline: boolean, gra
       hash: 'i7j8k9l',
       date: new Date(Date.now() - 172800000),
       author: 'github-copilot (code-triggered)',
-      message: 'auto-heal: fix context alignment issues',
+      message: 'Updated context files after merge',
       contextFiles: ['context.md', 'plan.md']
     }
   ];

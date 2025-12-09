@@ -17,7 +17,6 @@ Provides the `cit` command with Git-like operations for managing project context
 - `cit diff` - Show changes in context files
 - `cit checkout` - Revert to previous context state
 - `cit validate` - Check context file alignment
-- `cit auto-heal` - Fix alignment issues automatically
 - `cit blame` - Show context file attribution
 - `cit sync-plan` - Sync plan.md for current branch
 - `cit hooks` - Manage Git hooks
@@ -51,12 +50,14 @@ npm install -g @cxtmanager/cli
 cit init
 
 # Interactive setup asks:
-# 1. Template style (minimal/detailed/manual)
+# 1. Template style (blank/template)
 # 2. Git hooks installation (auto-switch plan.md)
-# 3. Update mode (manual/auto)
+# 3. Privacy & Git tracking (tracked/private)
 
 # Or use flags
-cit init --minimal --manual
+cit init --template
+# or
+cit init --blank
 
 # Check status
 cit status
@@ -80,7 +81,6 @@ cit commit "Updated project goals"
 
 ### Validation & Maintenance
 - `cit validate` - Check context file alignment and consistency
-- `cit auto-heal` - Automatically fix alignment issues
 - `cit blame <file>` - Show attribution for context file changes
 
 ### Branch Management
@@ -111,11 +111,10 @@ This happens via Git hooks (installed with `cit init` or `cit hooks install`).
 
 Configuration is stored in `.cxt/.cxtconfig.json`. Key settings:
 
-- `template_style` - Template style preference
+- `mode` - Template style (`blank` or `template`)
 - `git_integration.auto_install_hooks` - Auto-install Git hooks
-- `context.update_mode` - `manual` (warnings) or `auto` (AI updates)
 - `context.drift_detection` - Warn when code changes outpace context
-- `context.template_thresholds` - Warning thresholds for template content
+- `context.content_quality` - Warning thresholds for content quality
 
 ## Development
 

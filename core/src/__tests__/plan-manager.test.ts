@@ -59,7 +59,6 @@ describe('PlanManager', () => {
         auto_sync: false,
         health_checks: true,
         ai_attribution: true,
-        update_mode: 'manual',
         drift_detection: true,
         warn_threshold: 3,
         content_quality: {

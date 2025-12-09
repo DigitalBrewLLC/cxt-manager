@@ -59,21 +59,6 @@ export class ValidationEngine {
     };
   }
 
-  async autoHeal(issues: HealthIssue[], dryRun: boolean = false): Promise<string[]> {
-    const fixes: string[] = [];
-
-    for (const issue of issues) {
-      if (issue.autoFixable) {
-        const fix = await this.applyFix(issue, dryRun);
-        if (fix) {
-          fixes.push(fix);
-        }
-      }
-    }
-
-    return fixes;
-  }
-
   private async loadContextFiles(): Promise<Map<string, string>> {
     const files = new Map<string, string>();
     const fileNames = ['context.md', 'plan.md', 'guardrail.md'];
@@ -349,11 +334,6 @@ export class ValidationEngine {
       suggestions.push('💡 TIP: AI tools can read these files to better understand your project when providing assistance.');
     }
 
-    const autoFixableCount = issues.filter(i => i.autoFixable).length;
-    if (autoFixableCount > 0) {
-      suggestions.push(`Run "cit auto-heal" to fix ${autoFixableCount} issue(s) automatically`);
-    }
-
     const warningCount = issues.filter(i => i.type === 'warning').length;
     if (warningCount > 3) {
       suggestions.push('Consider reviewing and updating context files regularly');
@@ -362,35 +342,4 @@ export class ValidationEngine {
     return suggestions;
   }
 
-  private async applyFix(issue: HealthIssue, dryRun: boolean): Promise<string | null> {
-    const filePath = path.join(this.cxtPath, issue.file);
-
-    if (issue.message.includes('Missing required sections')) {
-      return await this.fixMissingSections(filePath, issue.file, dryRun);
-    }
-
-    if (issue.message.includes('Last updated')) {
-      return await this.updateLastModifiedDate(filePath, dryRun);
-    }
-
-    return null;
-  }
-
-  private async fixMissingSections(filePath: string, fileName: string, dryRun: boolean): Promise<string> {
-    if (dryRun) {
-      return `Would add missing sections to ${fileName}`;
-    }
-
-    // In a real implementation, we'd add the missing sections
-    return `Added missing sections to ${fileName}`;
-  }
-
-  private async updateLastModifiedDate(filePath: string, dryRun: boolean): Promise<string> {
-    if (dryRun) {
-      return `Would update last modified date in ${path.basename(filePath)}`;
-    }
-
-    // In a real implementation, we'd update the date
-    return `Updated last modified date in ${path.basename(filePath)}`;
-  }
 } 

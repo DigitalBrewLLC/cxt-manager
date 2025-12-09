@@ -164,7 +164,6 @@ export class GitHooksManager {
   private getBashHookScript(hookName: string, command: string): string {
     const silentFlag = this.config.git_integration?.silent_mode ? '--silent' : '';
     const commandWithFlags = command.includes('validate') ? `${command} --quick ${silentFlag}` :
-                            command.includes('auto-heal') ? `${command} --if-needed ${silentFlag}` :
                             `${command} ${silentFlag}`;
     
     return `#!/bin/sh
@@ -186,7 +185,6 @@ exit 0
   private getPowerShellHookScript(hookName: string, command: string): string {
     const silentFlag = this.config.git_integration?.silent_mode ? '--silent' : '';
     const commandWithFlags = command.includes('validate') ? `${command} --quick ${silentFlag}` :
-                            command.includes('auto-heal') ? `${command} --if-needed ${silentFlag}` :
                             `${command} ${silentFlag}`;
     
     return `#!/usr/bin/env pwsh

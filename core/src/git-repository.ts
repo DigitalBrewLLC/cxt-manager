@@ -44,6 +44,57 @@ export class GitRepository {
   }
 
   /**
+   * Get current Git user configuration
+   */
+  async getGitUser(): Promise<{ name: string; email: string; usedFallback: boolean }> {
+    try {
+      let name: string | null = null;
+      let email: string | null = null;
+      
+      // Try to get user.name from local config, then global
+      try {
+        const nameConfig = await this.git.getConfig('user.name', 'local');
+        name = nameConfig.value || null;
+      } catch {
+        try {
+          const nameConfig = await this.git.getConfig('user.name', 'global');
+          name = nameConfig.value || null;
+        } catch {
+          name = null;
+        }
+      }
+      
+      // Try to get user.email from local config, then global
+      try {
+        const emailConfig = await this.git.getConfig('user.email', 'local');
+        email = emailConfig.value || null;
+      } catch {
+        try {
+          const emailConfig = await this.git.getConfig('user.email', 'global');
+          email = emailConfig.value || null;
+        } catch {
+          email = null;
+        }
+      }
+      
+      const usedFallback = !name || !email;
+      
+      return {
+        name: name || 'CxtManager',
+        email: email || 'noreply@cxtmanager.dev',
+        usedFallback
+      };
+    } catch {
+      // Fallback if we can't get Git config
+      return {
+        name: 'CxtManager',
+        email: 'noreply@cxtmanager.dev',
+        usedFallback: true
+      };
+    }
+  }
+
+  /**
    * Add files and create a commit
    */
   async addAndCommit(files: string | string[], message: string, author?: string): Promise<void> {
@@ -64,8 +115,39 @@ export class GitRepository {
       
       // Create commit with optional author attribution
       if (author) {
+        // If author is provided but not in proper format, try to format it
+        let authorString = author;
+        let usedFallback = false;
+        
+        // Check if author is already in "Name <email>" format
+        if (!author.includes('<') || !author.includes('>')) {
+          // If it's just a name, get current Git user and use their email
+          // Or use a properly formatted fallback
+          if (author === 'CxtManager Init' || author === 'CxtManager') {
+            const gitUser = await this.getGitUser();
+            authorString = `${gitUser.name} <${gitUser.email}>`;
+            usedFallback = gitUser.usedFallback;
+          } else {
+            // Try to get current Git user email for the provided name
+            const gitUser = await this.getGitUser();
+            authorString = `${author} <${gitUser.email}>`;
+            usedFallback = gitUser.usedFallback;
+          }
+        }
+        
+        // Warn if we're using fallback Git user info
+        if (usedFallback) {
+          console.warn('');
+          console.warn('⚠️  Warning: Git user information not configured');
+          console.warn('   Using fallback author: CxtManager <noreply@cxtmanager.dev>');
+          console.warn('   To get accurate git blame, configure your Git user:');
+          console.warn('     git config --global user.name "Your Name"');
+          console.warn('     git config --global user.email "your.email@example.com"');
+          console.warn('');
+        }
+        
         await this.git.commit(message, undefined, {
-          '--author': author
+          '--author': authorString
         });
       } else {
         await this.git.commit(message);
@@ -86,7 +168,17 @@ export class GitRepository {
           '  💡 Or run "cit init" which will initialize Git automatically'
         );
       }
-      throw error;
+      if (errorMessage.includes('--author') && errorMessage.includes('not')) {
+        // Handle author format errors more gracefully
+        // Try committing without author override, using Git's default user
+        try {
+          await this.git.commit(message);
+        } catch (retryError) {
+          throw error; // Re-throw original error if retry fails
+        }
+      } else {
+        throw error;
+      }
     }
   }
 

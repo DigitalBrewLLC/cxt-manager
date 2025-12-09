@@ -48,3 +48,6 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 
+# Ideas and future planning documents
+.ideas/
+

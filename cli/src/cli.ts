@@ -6,7 +6,6 @@ import { ContextManager } from '@cxtmanager/core';
 import { initCommand } from './commands/init';
 import { statusCommand } from './commands/status';
 import { validateCommand } from './commands/validate';
-import { autoHealCommand } from './commands/auto-heal';
 import { blameCommand } from './commands/blame';
 import { addCommand } from './commands/add';
 import { commitCommand } from './commands/commit';
@@ -16,6 +15,7 @@ import { checkoutCommand } from './commands/checkout';
 import { syncPlanCommand } from './commands/sync-plan';
 import { hooksCommand } from './commands/hooks';
 import { syncGitignoreCommand } from './commands/sync-gitignore';
+import { versionCommand } from './commands/version';
 
 const program = new Command();
 
@@ -30,14 +30,12 @@ const packageJson = JSON.parse(
 // Global CLI setup
 program
   .name('cit')
-  .description('Git for AI Context - Stop being the context monkey')
-  .version(packageJson.version);
+  .description('Git for AI Context - Stop being the context monkey');
 
 // Add all commands
 program.addCommand(initCommand);
 program.addCommand(statusCommand);
 program.addCommand(validateCommand);
-program.addCommand(autoHealCommand);
 program.addCommand(blameCommand);
 program.addCommand(addCommand);
 program.addCommand(commitCommand);
@@ -56,6 +54,9 @@ program.exitOverride((err) => {
   } else if (err.code === 'commander.help') {
     // Help is expected, don't treat as error
     process.exit(0);
+  } else if (err.code === 'commander.version') {
+    // Version is handled by our custom option, don't treat as error
+    process.exit(0);
   } else {
     console.error(chalk.red(`❌ ${err.message}`));
   }
@@ -71,5 +72,16 @@ process.on('unhandledRejection', (error: Error) => {
   process.exit(1);
 });
 
-// Parse and execute
-program.parse(); 
+// Handle version flag before parsing (to avoid Commander's default version handler)
+const args = process.argv.slice(2);
+if (args.includes('--version') || args.includes('-v')) {
+  // Execute version command directly
+  versionCommand.parseAsync(['version'], { from: 'user' }).catch(() => {
+    // If parsing fails, just show version and exit
+    console.log(packageJson.version);
+    process.exit(0);
+  });
+} else {
+  // Parse and execute normally
+  program.parse();
+} 

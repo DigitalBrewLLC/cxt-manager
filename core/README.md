@@ -50,8 +50,7 @@ const manager = new ContextManager(projectRoot);
 // Initialize context files
 await manager.init({
   mode: 'blank',
-  autoInstallHooks: true,
-  updateMode: 'manual'
+  trackInGit: true
 });
 
 // Check if initialized
@@ -99,11 +98,8 @@ Configuration is stored in `.cxt/.cxtconfig.json`:
     "branch_aware": true
   },
   "context": {
-    "update_mode": "manual",
-    "drift_detection": {
-      "enabled": true,
-      "warn_threshold": 3
-    },
+    "drift_detection": true,
+    "warn_threshold": 3,
     "content_quality": {
       "min_content_length": 100,
       "min_content_lines": 3,

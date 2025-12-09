@@ -24,13 +24,11 @@ export interface ContentQualityThresholds {
   short_content_warning: number;    // Warn if content is below this length (default: 200)
 }
 
-export type UpdateMode = 'auto' | 'manual';
 export type InitMode = 'blank' | 'template';
 export type PlanTemplateStyle = 'blank' | 'template';
 export type ContentStatus = 'empty' | 'short' | 'populated';
 
 export interface ContextUpdateConfig {
-  update_mode?: UpdateMode;
   drift_detection?: boolean;
   warn_threshold?: number;  // Number of commits before warning (default: 3)
   content_quality?: ContentQualityThresholds;
@@ -83,7 +81,6 @@ export interface CxtConfig {
     auto_sync: boolean;
     health_checks: boolean;
     ai_attribution: boolean;
-    update_mode?: UpdateMode;
     drift_detection?: boolean;
     warn_threshold?: number;
     content_quality?: ContentQualityThresholds;

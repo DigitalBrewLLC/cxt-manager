@@ -13,7 +13,6 @@ This document shows example `.cxt/.cxtconfig.json` files for different use cases
     "hooks": {
       "post_checkout": "sync-plan",
       "pre_commit": "validate",
-      "post_merge": "auto-heal"
     },
     "silent_mode": true,
     "auto_install_hooks": true,
@@ -40,7 +39,6 @@ This document shows example `.cxt/.cxtconfig.json` files for different use cases
     "auto_sync": false,
     "health_checks": true,
     "ai_attribution": true,
-    "update_mode": "manual",
     "drift_detection": true,
     "warn_threshold": 3,
     "content_quality": {
@@ -67,7 +65,6 @@ This document shows example `.cxt/.cxtconfig.json` files for different use cases
     "hooks": {
       "post_checkout": "sync-plan",
       "pre_commit": "validate",
-      "post_merge": "auto-heal"
     },
     "silent_mode": true,
     "auto_install_hooks": true,
@@ -94,7 +91,6 @@ This document shows example `.cxt/.cxtconfig.json` files for different use cases
     "auto_sync": false,
     "health_checks": true,
     "ai_attribution": true,
-    "update_mode": "manual",
     "drift_detection": true,
     "warn_threshold": 3,
     "content_quality": {
@@ -121,7 +117,6 @@ This document shows example `.cxt/.cxtconfig.json` files for different use cases
     "hooks": {
       "post_checkout": "sync-plan",
       "pre_commit": "validate",
-      "post_merge": "auto-heal"
     },
     "silent_mode": true,
     "auto_install_hooks": true,
@@ -148,7 +143,6 @@ This document shows example `.cxt/.cxtconfig.json` files for different use cases
     "auto_sync": false,
     "health_checks": true,
     "ai_attribution": true,
-    "update_mode": "manual",
     "drift_detection": true,
     "warn_threshold": 3,
     "content_quality": {
@@ -173,10 +167,6 @@ This document shows example `.cxt/.cxtconfig.json` files for different use cases
 ### `git_integration.track_in_git`
 - **`true`**: Context files are tracked in Git (shared with team)
 - **`false`**: Context files are in `.gitignore` (private, local only)
-
-### `context.update_mode`
-- **`"manual"`**: AI updates require manual approval
-- **`"auto"`**: AI can update context files automatically (future feature)
 
 ### `context.content_quality`
 - **`min_content_length`**: Minimum characters of actual content (default: 100). Files below this are marked as "short"
