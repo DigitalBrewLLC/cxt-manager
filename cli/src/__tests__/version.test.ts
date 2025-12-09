@@ -65,7 +65,7 @@ describe('version command', () => {
     await versionCommand.parseAsync(['version'], { from: 'user' });
 
     expect(consoleSpy).toHaveBeenCalledWith(
-      expect.stringContaining(`CxtManager CLI v${packageJson.version}`)
+      expect.stringContaining(`cxt-manager CLI v${packageJson.version}`)
     );
     
     consoleSpy.mockRestore();

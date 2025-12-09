@@ -1,6 +1,6 @@
 # cxtmanager-cli
 
-Command-line interface for CxtManager - Git-like commands for managing AI project context.
+Command-line interface for cxt-manager - Git-like commands for managing AI project context.
 
 ## Philosophy
 

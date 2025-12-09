@@ -9,7 +9,7 @@ import { ContextManager, GitHooksManager } from '@cxtmanager/core';
 import type { InitOptions } from '@cxtmanager/core';
 
 export const initCommand = new Command('init')
-  .description('Initialize CxtManager in current project (like git init)')
+  .description('Initialize cxt-manager in current project (like git init)')
   .option('--template', 'Pre-structured with section headers and guidance')
   .option('--blank', 'Just title and metadata (you organize it)')
   .action(async (options) => {
@@ -18,7 +18,7 @@ export const initCommand = new Command('init')
       
       // Check if already initialized
       if (await manager.isInitialized()) {
-        console.log(chalk.red('❌ CxtManager already initialized'));
+        console.log(chalk.red('❌ cxt-manager already initialized'));
         console.log(chalk.yellow('💡 Use "cit status" to check current state'));
         return;
       }
@@ -83,7 +83,7 @@ export const initCommand = new Command('init')
       if (hasExistingHooks) {
         console.log(chalk.yellow('  ⚠️  Existing git hooks detected in .git/hooks/'));
         console.log('');
-        console.log('  CxtManager can add its hooks alongside your existing ones:');
+        console.log('  cxt-manager can add its hooks alongside your existing ones:');
         console.log('  • Switch plan.md when you change branches');
         console.log('  • Validate context files before commits');
         console.log('');
@@ -93,13 +93,13 @@ export const initCommand = new Command('init')
           {
             type: 'confirm',
             name: 'installHooks',
-            message: 'Add CxtManager hooks?',
+            message: 'Add cxt-manager hooks?',
             default: true
           }
         ]);
         installHooks = hooksAnswer.installHooks;
       } else {
-        console.log('  CxtManager can automatically:');
+        console.log('  cxt-manager can automatically:');
         console.log('  • Switch plan.md when you change branches');
         console.log('  • Validate context files before commits');
         console.log('');

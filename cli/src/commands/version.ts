@@ -156,7 +156,7 @@ export const versionCommand = new Command('version')
   .description('Show version information')
   .action(async () => {
     try {
-      console.log(chalk.bold(`CxtManager CLI v${currentVersion}`));
+      console.log(chalk.bold(`cxt-manager CLI v${currentVersion}`));
       
       // Try to get latest version (with timeout)
       const latestVersion = await getLatestVersion();

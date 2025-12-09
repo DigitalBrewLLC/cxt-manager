@@ -4,14 +4,14 @@ import ora from 'ora';
 import { ContextManager, GitHooksManager } from '@cxtmanager/core';
 
 export const hooksCommand = new Command('hooks')
-  .description('Manage git hooks for CxtManager')
+  .description('Manage git hooks for cxt-manager')
   .action(async () => {
     // Show help if no subcommand
     hooksCommand.help();
   });
 
 const installCommand = new Command('install')
-  .description('Install git hooks for CxtManager')
+  .description('Install git hooks for cxt-manager')
   .action(async () => {
     const spinner = ora({ text: 'Installing git hooks...', spinner: 'dots' }).start();
     
@@ -19,7 +19,7 @@ const installCommand = new Command('install')
       const manager = new ContextManager();
       
       if (!await manager.isInitialized()) {
-        spinner.fail(chalk.red('CxtManager not initialized.'));
+        spinner.fail(chalk.red('cxt-manager not initialized.'));
         console.log(chalk.yellow('💡 Run "cit init" to get started.'));
         process.exit(1);
       }
@@ -71,7 +71,7 @@ const installCommand = new Command('install')
   });
 
 const removeCommand = new Command('remove')
-  .description('Remove CxtManager git hooks')
+  .description('Remove cxt-manager git hooks')
   .action(async () => {
     const spinner = ora({ text: 'Removing git hooks...', spinner: 'dots' }).start();
     
@@ -79,7 +79,7 @@ const removeCommand = new Command('remove')
       const manager = new ContextManager();
       
       if (!await manager.isInitialized()) {
-        spinner.fail(chalk.red('CxtManager not initialized.'));
+        spinner.fail(chalk.red('cxt-manager not initialized.'));
         console.log(chalk.yellow('💡 Run "cit init" to get started.'));
         process.exit(1);
       }
@@ -90,7 +90,7 @@ const removeCommand = new Command('remove')
       const installedHooks = await hooksManager.getInstalledHooks();
       
       if (installedHooks.length === 0) {
-        spinner.info(chalk.yellow('No CxtManager hooks found'));
+        spinner.info(chalk.yellow('No cxt-manager hooks found'));
         return;
       }
 
@@ -126,7 +126,7 @@ const statusCommand = new Command('status')
       const manager = new ContextManager();
       
       if (!await manager.isInitialized()) {
-        console.log(chalk.red('❌ CxtManager not initialized'));
+        console.log(chalk.red('❌ cxt-manager not initialized'));
         console.log(chalk.yellow('💡 Run "cit init" to get started'));
         process.exit(1);
       }

@@ -9,7 +9,7 @@ export const syncGitignoreCommand = new Command('sync-gitignore')
       const manager = new ContextManager();
       
       if (!await manager.isInitialized()) {
-        console.error(chalk.red('❌ CxtManager not initialized'));
+        console.error(chalk.red('❌ cxt-manager not initialized'));
         console.log(chalk.yellow('💡 Run "cit init" first'));
         return;
       }

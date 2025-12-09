@@ -66,7 +66,7 @@ describe('validate command', () => {
       await validateCommand.parseAsync(['validate']);
 
       expect(consoleLogSpy).toHaveBeenCalledWith(
-        expect.stringContaining('CxtManager not initialized')
+        expect.stringContaining('cxt-manager not initialized')
       );
       expect(processExitSpy).toHaveBeenCalledWith(1);
     });

@@ -1,6 +1,6 @@
 # @cxtmanager/core
 
-Core library for CxtManager - context file management and Git integration.
+Core library for cxt-manager - context file management and Git integration.
 
 ## Philosophy
 
@@ -23,7 +23,7 @@ Core library for CxtManager - context file management and Git integration.
 - `guardrail.md` - Universal constraints and rules
 
 ### Branch Awareness
-`plan.md` content is branch-specific. When you switch Git branches, CxtManager automatically:
+`plan.md` content is branch-specific. When you switch Git branches, cxt-manager automatically:
 1. Saves current branch's plan.md to `.plan-history/`
 2. Restores the target branch's plan.md (or creates template if new)
 

@@ -1,10 +1,10 @@
-# CxtManager
+# cxt-manager
 
 **"Stop being the context monkey. Manage your AI project context like code."**
 
 Git for AI Context - Version control for your AI coding assistant's project memory.
 
-> ⚠️ **Active Development**: CxtManager is under heavy development.
+> ⚠️ **Active Development**: cxt-manager is under heavy development.
 >
 > APIs will change. Architecture is being refined.
 >
@@ -28,11 +28,11 @@ Every time you start a new chat with your AI coding assistant, you're the "conte
 - Restating constraints and requirements
 - Watching your AI forget everything between sessions
 
-**Your AI has no memory. Your project does. This is the gap CxtManager fills.**
+**Your AI has no memory. Your project does. This is the gap cxt-manager fills.**
 
 ## The Solution
 
-CxtManager gives you `cit` - a Git-like CLI for managing a `.cxt/` folder that your AI can reference. Three files, one source of truth:
+cxt-manager gives you `cit` - a Git-like CLI for managing a `.cxt/` folder that your AI can reference. Three files, one source of truth:
 ```
 .cxt/
 ├── context.md    # What your project is (stable truth)
@@ -96,7 +96,7 @@ Your AI can then:
 - ✅ Respect constraints
 - ✅ Pick up where previous conversations left off
 
-**You and your AI decide what goes in the files. CxtManager just keeps them organized, versioned, and aligned.**
+**You and your AI decide what goes in the files. cxt-manager just keeps them organized, versioned, and aligned.**
 
 ## Quick Start
 
@@ -129,7 +129,7 @@ cit init
 
 **During `cit init`, `.gitignore` is automatically configured based on your choice.**
 
-By default, `.cxt/` files are tracked in Git for team sharing. During `cit init`, you can choose to keep context files private, and CxtManager will automatically add `.cxt/` to `.gitignore` for you. This is useful for:
+By default, `.cxt/` files are tracked in Git for team sharing. During `cit init`, you can choose to keep context files private, and cxt-manager will automatically add `.cxt/` to `.gitignore` for you. This is useful for:
 - Personal projects with sensitive context
 - Projects where context should remain local
 - Privacy-sensitive development workflows
@@ -154,9 +154,9 @@ cit log             # View context change history
 
 ## Core Philosophy
 
-**CxtManager is a Manager, not an Enforcer.**
+**cxt-manager is a Manager, not an Enforcer.**
 
-We provide structure and Git-like version control for your context files. You decide what goes in them. Your AI helps you write them. CxtManager keeps them organized, versioned, and aligned.
+We provide structure and Git-like version control for your context files. You decide what goes in them. Your AI helps you write them. cxt-manager keeps them organized, versioned, and aligned.
 
 ### The Alignment Principle
 
@@ -202,7 +202,7 @@ This isn't just a feature - it's the foundation of reliable AI-assisted developm
 
 ## How It Works
 
-CxtManager uses familiar Git-like commands to version control your project context. The `.cxt/` folder contains three structured files:
+cxt-manager uses familiar Git-like commands to version control your project context. The `.cxt/` folder contains three structured files:
 
 - **context.md** - Your project's stable truth (what it does, why it exists, architecture)
 - **plan.md** - Your implementation plan (branch-specific, switches with Git branches)
@@ -288,16 +288,16 @@ All files are version controlled, validated for alignment, and easily accessible
 7. **Privacy Friendly** - Your context, your machine, your choice to share
 8. **Zero Lock-In** - Just markdown files, take them anywhere
 
-## How CxtManager Compares
+## How cxt-manager Compares
 
 | Approach | Pros | Cons | Best For |
 |----------|------|------|----------|
 | **No context management** | Zero overhead | Repeat yourself constantly | Tiny projects |
 | **Ad-hoc markdown files** | Simple, familiar | No structure, no versioning | Solo experiments |
-| **CxtManager** | Structured, versioned, validated | Learning curve | Serious AI-assisted development |
+| **cxt-manager** | Structured, versioned, validated | Learning curve | Serious AI-assisted development |
 | **External tools (Cursor Rules, etc.)** | IDE integration | Platform-locked, limited control | IDE-specific workflows |
 
-**CxtManager is for developers who:**
+**cxt-manager is for developers who:**
 
 - Want structure without being locked into a platform
 - Trust Git-like version control

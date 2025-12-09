@@ -14,7 +14,7 @@ export const validateCommand = new Command('validate')
       
       if (!await manager.isInitialized()) {
         if (!options.silent) {
-          console.log(chalk.red('❌ CxtManager not initialized'));
+          console.log(chalk.red('❌ cxt-manager not initialized'));
           console.log(chalk.yellow('💡 Run "cit init" to get started'));
         }
         process.exit(1);
