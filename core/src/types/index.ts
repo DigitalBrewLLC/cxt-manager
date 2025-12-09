@@ -87,7 +87,6 @@ export interface AttributionInfo {
 
 export interface HealthStatus {
   overall: 'healthy' | 'warning' | 'error';
-  // alignments: Optional - reserved for future MCP/agent integration with semantic understanding
   alignments?: {
     contextToPlan: AlignmentStatus;
     allToGuardrails: AlignmentStatus;

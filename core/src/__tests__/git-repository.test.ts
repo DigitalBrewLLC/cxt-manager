@@ -172,6 +172,14 @@ describe('GitRepository', () => {
       const git = simpleGit(testDir);
       await git.init();
       
+      // Set Git user config (required even when using --author override)
+      try {
+        await git.addConfig('user.name', 'Test User', false, 'local');
+        await git.addConfig('user.email', 'test@example.com', false, 'local');
+      } catch {
+        // Ignore config errors
+      }
+      
       const testFile = path.join(testDir, 'test.txt');
       fs.writeFileSync(testFile, 'content');
       

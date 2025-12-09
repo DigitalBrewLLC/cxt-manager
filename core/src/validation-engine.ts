@@ -52,7 +52,6 @@ export class ValidationEngine {
       lastChecked: new Date(),
       issues,
       suggestions
-      // alignments: Reserved for future MCP/agent integration with semantic understanding
     };
   }
 

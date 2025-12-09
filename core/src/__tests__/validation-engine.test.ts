@@ -136,7 +136,6 @@ This is a short description.
       expect(health).toHaveProperty('overall');
       expect(health).toHaveProperty('issues');
       expect(health).toHaveProperty('suggestions');
-      // alignments is optional - reserved for future MCP/agent integration
     });
   });
 });

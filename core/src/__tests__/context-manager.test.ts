@@ -149,7 +149,6 @@ describe('ContextManager', () => {
         expect(health).toHaveProperty('issues');
         expect(health).toHaveProperty('suggestions');
         expect(health).toHaveProperty('lastChecked');
-        // alignments is optional - reserved for future MCP/agent integration
         expect(['healthy', 'warning', 'error']).toContain(health.overall);
       } catch (error) {
         // Expected if git is not initialized

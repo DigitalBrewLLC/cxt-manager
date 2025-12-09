@@ -128,7 +128,6 @@ export interface HealthStatus {
   lastChecked: Date;
   issues: HealthIssue[];
   suggestions: string[];
-  // alignments: Optional - reserved for future MCP/agent integration with semantic understanding
   alignments?: {
     contextToPlan: string;
     allToGuardrails: string;
