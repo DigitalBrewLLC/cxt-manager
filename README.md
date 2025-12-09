@@ -40,11 +40,63 @@ CxtManager gives you `cit` - a Git-like CLI for managing a `.cxt/` folder that y
 └── guardrail.md  # What rules to follow (universal constraints)
 ```
 
-Now your AI assistant can:
-- ✅ Reference project goals without asking
-- ✅ Stay aligned with architectural decisions
-- ✅ Follow project-specific constraints
-- ✅ Pick up where the last conversation left off
+### The Three Context Files
+
+Each file serves a specific purpose:
+
+#### `context.md` - Your Project's Stable Truth
+
+**Purpose:** High-level project information that rarely changes
+
+- Project goals and architecture
+- Technology decisions and rationale
+- Domain concepts
+- Team conventions
+
+**When to update:** When fundamental aspects of your project change
+
+---
+
+#### `plan.md` - Your Current Work (Branch-Specific)
+
+**Purpose:** What you're building right now
+
+- Current tasks and progress
+- Open questions
+- Temporary notes
+
+**When to update:** As your work evolves. Auto-switches with Git branches (if hooks enabled).
+
+---
+
+#### `guardrail.md` - Universal Rules and Constraints
+
+**Purpose:** Things that should NEVER change without careful consideration
+
+- Technology constraints
+- Security requirements
+- Performance rules
+- Code style principles
+- Explicit things to avoid
+
+**When to update:** Rarely. Only when fundamental constraints change.
+
+---
+
+### How Your AI Uses These Files
+
+**In any AI conversation, reference your context:**
+
+> "Please read the context files in `.cxt/` before we begin."
+
+Your AI can then:
+
+- ✅ Understand project goals without questions
+- ✅ Follow architectural decisions
+- ✅ Respect constraints
+- ✅ Pick up where previous conversations left off
+
+**You and your AI decide what goes in the files. CxtManager just keeps them organized, versioned, and aligned.**
 
 ## Quick Start
 
@@ -119,25 +171,35 @@ This isn't just a feature - it's the foundation of reliable AI-assisted developm
 
 ## Who It's For
 
-### Primary: AI-Assisted Developers
-You use tools like Cursor, Copilot, or Claude for coding. You want them to understand your project without constant re-explanation.
+### Solo Developers Using AI Assistants
 
-### Secondary: Development Teams
-Multiple developers using AI assistants need shared context. Track how project understanding evolves. Onboard new team members faster.
+**You:** Use Cursor, Copilot, or Claude daily  
 
-### Already Using Markdown Files?
-If you maintain `PROJECT.md`, `ARCHITECTURE.md`, `NOTES.md`, or similar files, CxtManager enhances your existing workflow:
+**Problem:** Constantly re-explaining your project  
 
-**You're already documenting in markdown. We add version control and structure:**
-```
-Before: PROJECT.md, ARCHITECTURE.md, NOTES.md, TODO.md
-        (Scattered, unversioned, hard to keep aligned)
+**Solution:** AI reads `.cxt/` files, understands context instantly  
 
-After:  .cxt/context.md, .cxt/plan.md, .cxt/guardrail.md
-        (Structured, versioned with cit commit/cit log, validated, AI-accessible)
-```
+**Benefit:** 5-10 minutes saved per conversation × 20 conversations/week = 100+ minutes/week
 
-You version control your code. Why not version control your project context the same way?
+### Development Teams with AI in Workflow
+
+**You:** Team of 2-10 developers, all using AI tools  
+
+**Problem:** Each person's AI has different project understanding  
+
+**Solution:** Shared `.cxt/` files in Git = shared project knowledge  
+
+**Benefit:** Consistent AI suggestions, faster onboarding, better alignment
+
+### Existing Markdown Documentation Users
+
+**You:** Already maintain PROJECT.md, NOTES.md, etc.  
+
+**Problem:** Files are unversioned, scattered, hard to keep in sync  
+
+**Solution:** Migrate to `.cxt/` structure with version control  
+
+**Benefit:** Same workflow, but now trackable and validated
 
 ## How It Works
 
@@ -218,11 +280,30 @@ All files are version controlled, validated for alignment, and easily accessible
 
 ## Key Benefits
 
-1. **"Git for AI Context"** - Version control you already trust, for context
-2. **Offline-First** - No external services, works anywhere
-3. **AI Accessible** - Files your coding assistant can reference instantly
-4. **Team Friendly** - Share context through Git like you share code (or keep it private)
-5. **Simple** - If you know Git, you know CxtManager
+1. **Git-Like Workflow** - Commands you already know (status, add, commit, log, diff)
+2. **Stop Repeating Yourself** - Write context once, reference it forever
+3. **Version Control for Knowledge** - Track how project understanding evolves
+4. **AI Tool Agnostic** - Works with Cursor, Copilot, Claude, ChatGPT, any AI
+5. **Team Alignment** - Everyone's AI works from the same source of truth
+6. **Offline First** - No external services, API keys, or internet required
+7. **Privacy Friendly** - Your context, your machine, your choice to share
+8. **Zero Lock-In** - Just markdown files, take them anywhere
+
+## How CxtManager Compares
+
+| Approach | Pros | Cons | Best For |
+|----------|------|------|----------|
+| **No context management** | Zero overhead | Repeat yourself constantly | Tiny projects |
+| **Ad-hoc markdown files** | Simple, familiar | No structure, no versioning | Solo experiments |
+| **CxtManager** | Structured, versioned, validated | Learning curve | Serious AI-assisted development |
+| **External tools (Cursor Rules, etc.)** | IDE integration | Platform-locked, limited control | IDE-specific workflows |
+
+**CxtManager is for developers who:**
+
+- Want structure without being locked into a platform
+- Trust Git-like version control
+- Use multiple AI tools (not just one IDE)
+- Work in teams or on long-term projects
 
 ## Development
 
