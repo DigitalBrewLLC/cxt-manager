@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+### [1.0.12](https://github.com/DigitalBrewLLC/cxt-manager/compare/v1.0.11...v1.0.12) (2025-12-09)
+
+
+### Code Refactoring
+
+* remove auto mode and auto-heal features ([b593e9c](https://github.com/DigitalBrewLLC/cxt-manager/commit/b593e9cca3da05a861e70f59ebf1896add72361d))
+* remove MCP config and add tests ([54b1d09](https://github.com/DigitalBrewLLC/cxt-manager/commit/54b1d09e166cd8de87027c49a9642ed1e2ee4b7a))
+* standardize branding to "cxt-manager" in user-facing messages ([a50e900](https://github.com/DigitalBrewLLC/cxt-manager/commit/a50e90095b0ac37ddc5131f833e19eb075fc8ca3))
+
 ### [1.0.11](https://github.com/DigitalBrewLLC/cxt-manager/compare/v1.0.10...v1.0.11) (2025-12-09)
 
 ### [1.0.10](https://github.com/DigitalBrewLLC/cxt-manager/compare/v1.0.9...v1.0.10) (2025-12-06)
