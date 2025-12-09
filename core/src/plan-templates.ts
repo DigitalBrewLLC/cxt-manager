@@ -5,59 +5,28 @@
 
 export class PlanTemplates {
   /**
-   * Get minimal plan template
+   * Get blank-mode plan template (just title and metadata, no structure)
    */
-  static getMinimal(branchName?: string, date?: string): string {
+  static getBlank(branchName?: string, date?: string): string {
     const branch = branchName || 'current branch';
     const createdDate = date || new Date().toISOString().split('T')[0];
     
-    return `# Current Branch Implementation
+    return `# Development Plan
+
+*This file contains branch-specific implementation details.*
+*When you switch branches, this file automatically switches to that branch's plan.*
+*See context.md for stable project background.*
 
 *Branch: ${branch}*
 *Created: ${createdDate}*
 
-## What's Being Built
-<!-- 
-  GUIDANCE: Describe what is being built in this branch/feature.
-  This helps AI understand the current work when providing assistance.
-  Example: "OAuth2 authentication system with Google and GitHub providers"
-  
-  TIP: Be specific about the feature or functionality being implemented.
--->
-
-## Implementation Approach  
-<!-- 
-  GUIDANCE: Describe the technical approach for implementing this feature.
-  This helps AI make appropriate suggestions and understand the architecture.
-  Example: "Use Passport.js for OAuth strategies, store tokens in encrypted session storage"
-  
-  TIP: Include key technologies, patterns, or architectural decisions.
--->
-
-## Tasks & Progress
-<!-- 
-  GUIDANCE: Track tasks and progress as work proceeds.
-  This helps AI understand what's done and what remains.
-  Example: "- [x] Set up OAuth providers, - [ ] Implement token refresh"
-  
-  TIP: Update this section as work progresses. AI can help track completion.
--->
-
-## Decisions Made
-<!-- 
-  GUIDANCE: Document key technical decisions made during implementation.
-  This helps maintain context and explain why certain approaches were chosen.
-  Example: "Chose JWT over session tokens for better scalability"
-  
-  TIP: Include rationale for important architectural or design decisions.
--->
 `;
   }
 
   /**
-   * Get detailed plan template
+   * Get template-mode plan template (structured with sections and guidance)
    */
-  static getDetailed(branchName?: string, date?: string): string {
+  static getTemplate(branchName?: string, date?: string): string {
     const branch = branchName || 'current branch';
     const createdDate = date || new Date().toISOString().split('T')[0];
     

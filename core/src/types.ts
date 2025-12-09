@@ -1,6 +1,6 @@
 export interface PlanManagementConfig {
   backup_on_switch: boolean;
-  template: 'minimal' | 'detailed' | 'custom';
+  plan_template_style?: PlanTemplateStyle; // Override init mode for plan.md (defaults to config.mode)
   auto_commit_ai_changes: boolean;
   archive_completed: boolean;
 }
@@ -17,17 +17,23 @@ export interface GitIntegrationConfig {
   track_in_git?: boolean; // If false, adds .cxt/ to .gitignore for privacy (default: true)
 }
 
-export interface TemplateThresholds {
-  well_populated: number;  // <= this % = well populated (default: 30)
-  mild_warning: number;    // 30-50% = mild suggestion (default: 50)
-  critical: number;         // >= this % = critical/template-only (default: 70)
+export interface ContentQualityThresholds {
+  min_content_length: number;      // Minimum characters of actual content (default: 100)
+  min_content_lines: number;        // Minimum lines of actual content (default: 3)
+  empty_section_warning: boolean;    // Warn if sections are empty in template mode (default: true)
+  short_content_warning: number;    // Warn if content is below this length (default: 200)
 }
 
+export type UpdateMode = 'auto' | 'manual';
+export type InitMode = 'blank' | 'template';
+export type PlanTemplateStyle = 'blank' | 'template';
+export type ContentStatus = 'empty' | 'short' | 'populated';
+
 export interface ContextUpdateConfig {
-  update_mode?: 'auto' | 'manual';
+  update_mode?: UpdateMode;
   drift_detection?: boolean;
   warn_threshold?: number;  // Number of commits before warning (default: 3)
-  template_thresholds?: TemplateThresholds;
+  content_quality?: ContentQualityThresholds;
   show_in_changed_files?: boolean;
   auto_commit_context_updates?: boolean;
 }
@@ -35,7 +41,7 @@ export interface ContextUpdateConfig {
 export interface SyncPlanOptions {
   silent?: boolean;
   createIfMissing?: boolean;
-  template?: 'minimal' | 'detailed';
+  template?: PlanTemplateStyle; // 'blank' or 'template'
 }
 
 export interface SyncPlanResult {
@@ -47,7 +53,7 @@ export interface SyncPlanResult {
 
 export interface CxtConfig {
   version: string;
-  mode: 'auto' | 'manual';
+  mode: InitMode;
   mcp: {
     enabled: boolean;
     sources: {
@@ -77,10 +83,10 @@ export interface CxtConfig {
     auto_sync: boolean;
     health_checks: boolean;
     ai_attribution: boolean;
-    update_mode?: 'auto' | 'manual';
+    update_mode?: UpdateMode;
     drift_detection?: boolean;
     warn_threshold?: number;
-    template_thresholds?: TemplateThresholds;
+    content_quality?: ContentQualityThresholds;
     show_in_changed_files?: boolean;
     auto_commit_context_updates?: boolean;
   };
@@ -100,7 +106,7 @@ export interface ContextFile {
 }
 
 export interface InitOptions {
-  mode: 'auto' | 'manual';
+  mode: 'blank' | 'template';
   trackInGit?: boolean; // If false, adds .cxt/ to .gitignore for privacy (default: true)
 }
 
@@ -177,8 +183,13 @@ export interface StatusInfo {
     file: string;
     status: string;
     staged: boolean;
-    contentStatus?: 'populated' | 'template-only' | 'empty';
-    templatePercentage?: number; // 0-100, percentage of content that is template/placeholder
+    contentStatus?: ContentStatus;
+    contentQuality?: {
+      status: ContentStatus;
+      contentLength: number;
+      contentLines: number;
+      emptySections?: number;
+    };
     size?: number;
   }>;
   lastUpdated: Date;

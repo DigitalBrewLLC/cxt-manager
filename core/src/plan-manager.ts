@@ -1,7 +1,7 @@
 import * as fs from 'fs-extra';
 import * as path from 'path';
 import { GitRepository } from './git-repository';
-import { CxtConfig, SyncPlanOptions, SyncPlanResult } from './types';
+import { CxtConfig, SyncPlanOptions, SyncPlanResult, PlanTemplateStyle } from './types';
 import { PlanTemplates } from './plan-templates';
 
 export class PlanManager {
@@ -88,15 +88,27 @@ export class PlanManager {
   }
 
   /**
-   * Create blank plan.md template
+   * Create plan.md template based on init mode and config
    */
-  async createBlankPlan(template: 'minimal' | 'detailed' = 'minimal'): Promise<void> {
+  async createBlankPlan(template?: PlanTemplateStyle): Promise<void> {
     const branch = await this.getCurrentBranch();
     const date = new Date().toISOString().split('T')[0];
     
-    const content = template === 'detailed' 
-      ? PlanTemplates.getDetailed(branch, date)
-      : PlanTemplates.getMinimal(branch, date);
+    // Determine template style: check plan_management.plan_template_style first, then fall back to config.mode
+    const planTemplateStyle: PlanTemplateStyle = this.config.plan_management?.plan_template_style || (this.config.mode as PlanTemplateStyle);
+    
+    // Use provided template parameter if given, otherwise use determined style
+    const finalTemplate: PlanTemplateStyle = template || planTemplateStyle;
+    
+    let content: string;
+    
+    if (finalTemplate === 'blank') {
+      // Blank mode: just title and metadata, no structure
+      content = PlanTemplates.getBlank(branch, date);
+    } else {
+      // Template mode: use structured templates with guidance
+      content = PlanTemplates.getTemplate(branch, date);
+    }
     
     await fs.writeFile(this.planPath, content, 'utf-8');
   }
@@ -118,7 +130,7 @@ export class PlanManager {
    * Main sync method: save current, restore for new branch
    */
   async syncPlan(options: SyncPlanOptions = {}): Promise<SyncPlanResult> {
-    const { silent = false, createIfMissing = true, template = 'minimal' } = options;
+    const { silent = false, createIfMissing = true, template } = options;
 
     // Get current branch
     const currentBranch = await this.getCurrentBranch();
@@ -156,7 +168,7 @@ export class PlanManager {
     // Try to restore plan for current branch
     const restored = await this.restorePlan(currentBranch);
 
-    // If no saved plan exists and createIfMissing is true, create blank template
+    // If no saved plan exists and createIfMissing is true, create template
     let created = false;
     if (!restored && createIfMissing) {
       await this.createBlankPlan(template);

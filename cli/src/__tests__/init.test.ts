@@ -16,16 +16,16 @@ describe('init command', () => {
     expect(description.length).toBeGreaterThan(0);
   });
 
-  it('should have --manual option', () => {
+  it('should have --template option', () => {
     const options = initCommand.options;
-    const manualOption = options.find((opt: { long?: string }) => opt.long === '--manual');
-    expect(manualOption).toBeDefined();
+    const templateOption = options.find((opt: { long?: string }) => opt.long === '--template');
+    expect(templateOption).toBeDefined();
   });
 
-  it('should have --minimal option', () => {
+  it('should have --blank option', () => {
     const options = initCommand.options;
-    const minimalOption = options.find((opt: { long?: string }) => opt.long === '--minimal');
-    expect(minimalOption).toBeDefined();
+    const blankOption = options.find((opt: { long?: string }) => opt.long === '--blank');
+    expect(blankOption).toBeDefined();
   });
 
   it('should have valid command structure', () => {

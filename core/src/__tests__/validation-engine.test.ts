@@ -2,7 +2,6 @@ import { ValidationEngine } from '../validation-engine';
 import * as fs from 'fs-extra';
 import * as path from 'path';
 import * as os from 'os';
-import type { HealthStatus, HealthIssue } from '../types';
 
 describe('ValidationEngine', () => {
   let testDir: string;
@@ -51,25 +50,65 @@ describe('ValidationEngine', () => {
       expect(Array.isArray(health.suggestions)).toBe(true);
     });
 
-    it('should detect template-only files', async () => {
-      const cxtDir = path.join(testDir, '.cxt');
-      await fs.ensureDir(cxtDir);
+    it('should detect empty files', async () => {
+      // ValidationEngine expects files directly in cxtPath, not in .cxt subdirectory
+      await fs.ensureDir(testDir);
 
-      // Create a file with mostly template content
-      const templateContent = `# Project Context
-<!-- TODO: Add project description -->
-<!-- TODO: Add goals -->
-<!-- TODO: Add constraints -->
+      // Create an empty file (just structure, no actual content)
+      // Only header and metadata - no user content
+      const emptyContent = `# Project Context
+
+*Last Updated: 2025-01-15*
 `;
-      await fs.writeFile(path.join(cxtDir, 'context.md'), templateContent);
+      await fs.writeFile(path.join(testDir, 'context.md'), emptyContent);
+      // Also create plan.md and guardrail.md so validation runs
+      await fs.writeFile(path.join(testDir, 'plan.md'), '# Plan\n');
+      await fs.writeFile(path.join(testDir, 'guardrail.md'), '# Guardrails\n');
 
       const health = await validationEngine.checkHealth();
 
-      // Validation engine should return health status
+      // Validation engine should detect empty content
       expect(health).toBeDefined();
       expect(health.overall).toBeDefined();
       expect(Array.isArray(health.issues)).toBe(true);
-      // May or may not detect template issues depending on implementation
+      // Should have issues for empty content
+      // The message should be "File is empty or contains only structure"
+      const emptyIssues = health.issues.filter(issue => 
+        issue.message.includes('empty') || 
+        issue.message.includes('very little content') ||
+        issue.message.includes('File is empty')
+      );
+      expect(emptyIssues.length).toBeGreaterThan(0);
+    });
+
+    it('should detect short content files', async () => {
+      // ValidationEngine expects files directly in cxtPath, not in .cxt subdirectory
+      await fs.ensureDir(testDir);
+
+      // Create a file with very little content (below 100 chars, 3 lines)
+      const shortContent = `# Project Context
+
+This is a short description.
+`;
+      await fs.writeFile(path.join(testDir, 'context.md'), shortContent);
+      // Also create plan.md and guardrail.md so validation runs
+      await fs.writeFile(path.join(testDir, 'plan.md'), '# Plan\n');
+      await fs.writeFile(path.join(testDir, 'guardrail.md'), '# Guardrails\n');
+
+      const health = await validationEngine.checkHealth();
+
+      // Validation engine should detect short content
+      expect(health).toBeDefined();
+      expect(health.overall).toBeDefined();
+      expect(Array.isArray(health.issues)).toBe(true);
+      // Should have issues for short content
+      // The message should be "File has very little content"
+      const shortIssues = health.issues.filter(issue => 
+        issue.message.includes('very little content') || 
+        issue.message.includes('short') ||
+        issue.message.includes('File has very little')
+      );
+      expect(shortIssues.length).toBeGreaterThan(0);
     });
 
     it('should check alignment between context and plan', async () => {

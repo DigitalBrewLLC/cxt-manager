@@ -31,7 +31,7 @@ Core library for CxtManager - context file management and Git integration.
 Context files should cross-reference each other and tell a consistent story. The validation engine checks for:
 - Structural consistency
 - Cross-references
-- Template-only content warnings
+- Content quality warnings (empty, short content)
 - Drift detection (code changes outpacing context updates)
 
 ## Installation
@@ -49,7 +49,7 @@ const manager = new ContextManager(projectRoot);
 
 // Initialize context files
 await manager.init({
-  templateStyle: 'minimal',
+  mode: 'blank',
   autoInstallHooks: true,
   updateMode: 'manual'
 });
@@ -91,7 +91,7 @@ Configuration is stored in `.cxt/.cxtconfig.json`:
 ```json
 {
   "version": "1.0.0",
-  "template_style": "minimal",
+  "mode": "blank",
   "git_integration": {
     "auto_install_hooks": true
   },
@@ -104,10 +104,11 @@ Configuration is stored in `.cxt/.cxtconfig.json`:
       "enabled": true,
       "warn_threshold": 3
     },
-    "template_thresholds": {
-      "well_populated": 30,
-      "mild_warning": 50,
-      "critical": 70
+    "content_quality": {
+      "min_content_length": 100,
+      "min_content_lines": 3,
+      "empty_section_warning": true,
+      "short_content_warning": 200
     }
   }
 }

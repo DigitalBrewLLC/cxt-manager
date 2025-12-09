@@ -4,7 +4,7 @@ import { GitRepository } from './git-repository';
 import { FileWatcher } from './file-watcher';
 import { ValidationEngine } from './validation-engine';
 import { PlanManager } from './plan-manager';
-import { CxtConfig, InitOptions, ProjectAnalysis, StatusInfo, HealthStatus, ContextFile, SyncPlanOptions, SyncPlanResult, ProjectStructure } from './types';
+import { CxtConfig, InitOptions, ProjectAnalysis, StatusInfo, HealthStatus, ContextFile, SyncPlanOptions, SyncPlanResult, ProjectStructure, UpdateMode, ContentStatus } from './types';
 
 export class ContextManager {
   private projectRoot: string;
@@ -68,14 +68,14 @@ export class ContextManager {
 
     // Generate content based on mode
     switch (options.mode) {
-      case 'manual':
-        await this.createManualTemplates();
+      case 'template':
+        await this.createTemplateFiles();
         break;
-      case 'auto':
-        await this.createBasicContent(analysis);
+      case 'blank':
+        await this.createBlankFiles();
         break;
       default:
-        await this.createBasicContent(analysis);
+        await this.createBlankFiles();
     }
 
     // Initial Git commit (only if tracking in Git)
@@ -118,10 +118,11 @@ export class ContextManager {
 
     // Update validation engine with current config thresholds
     const config = await this.loadConfig();
-    const thresholds = config.context?.template_thresholds || {
-      well_populated: 30,
-      mild_warning: 50,
-      critical: 70
+    const thresholds = config.context?.content_quality || {
+      min_content_length: 100,
+      min_content_lines: 3,
+      empty_section_warning: true,
+      short_content_warning: 200
     };
     this.validationEngine = new ValidationEngine(this.cxtPath, thresholds);
 
@@ -304,11 +305,11 @@ export class ContextManager {
     return technologies;
   }
 
-  private async createManualTemplates(): Promise<void> {
+  private async createTemplateFiles(): Promise<void> {
     const templates = {
-      'context.md': this.getManualTemplate('context'),
-      'plan.md': this.getManualTemplate('plan'),
-      'guardrail.md': this.getManualTemplate('guardrail')
+      'context.md': this.getTemplateContent('context'),
+      'plan.md': this.getTemplateContent('plan'),
+      'guardrail.md': this.getTemplateContent('guardrail')
     };
 
     for (const [fileName, content] of Object.entries(templates)) {
@@ -317,78 +318,46 @@ export class ContextManager {
     }
   }
 
-  private async createBasicContent(analysis: ProjectAnalysis): Promise<void> {
-    // Create basic content based on analysis
-    const projectName = analysis.packageJson?.name || 'Project';
-    const readmeFirstLine = analysis.readme.split('\n')[0] || '';
-    const projectDescription = readmeFirstLine || 'Add your project description here';
-    
-    const contextContent = `# ${projectName} Context
+  private async createBlankFiles(): Promise<void> {
+    // Create blank files with just title and metadata, no structure
+    const templates = {
+      'context.md': this.getBlankTemplate('context'),
+      'plan.md': this.getBlankTemplate('plan'),
+      'guardrail.md': this.getBlankTemplate('guardrail')
+    };
+
+    for (const [fileName, content] of Object.entries(templates)) {
+      const filePath = path.join(this.cxtPath, fileName);
+      await fs.writeFile(filePath, content);
+    }
+  }
+
+  private getBlankTemplate(type: string): string {
+    const templates: Record<string, string> = {
+      context: `# Project Context
 
 *This file contains stable project information that doesn't change per branch.*
 *See plan.md for branch-specific implementation details.*
 
-*Last Updated: ${new Date().toISOString().split('T')[0]}*
+`,
+      plan: `# Development Plan
 
-## Project Purpose
+*This file contains branch-specific implementation details.*
+*When you switch branches, this file automatically switches to that branch's plan.*
+*See context.md for stable project background.*
 
-${projectDescription}
+`,
+      guardrail: `# Guardrails
 
-<!-- 
-  GUIDANCE: Describe what this project does and why it exists.
-  This helps AI understand the project's goals when providing assistance.
-  
-  TIP: Be specific about the problem you're solving and who benefits from it.
--->
+*This file contains universal rules and constraints that should rarely change.*
 
-## Core Problem
+`
+    };
 
-<!-- 
-  GUIDANCE: What problem does this project solve?
-  This helps AI understand the motivation behind the project.
-  Example: "Remote teams struggle to track tasks across multiple tools"
-  
-  TIP: Focus on the user's pain point, not the technical solution.
--->
-
-## Solution
-
-<!-- 
-  GUIDANCE: How does this project address the problem?
-  This helps AI understand your approach to solving the problem.
-  Example: "Unified task management with Slack integration for seamless workflow"
-  
-  TIP: Explain the high-level approach, not implementation details (those go in plan.md).
--->
-
-## Target Users
-
-<!-- 
-  GUIDANCE: Who will use this project?
-  This helps AI tailor suggestions to your audience.
-  Example: "Remote teams of 5-50 people using Slack for communication"
-  
-  TIP: Be specific about user characteristics, needs, and constraints.
--->
-
-## Key Features
-
-<!-- 
-  GUIDANCE: What are the main features and capabilities?
-  This helps AI understand what functionality is important.
-  Example: "Task creation, team collaboration, Slack notifications, deadline tracking"
-  
-  TIP: List the core features that define your project's value proposition.
--->
-`;
-
-    await fs.writeFile(path.join(this.cxtPath, 'context.md'), contextContent);
-    await fs.writeFile(path.join(this.cxtPath, 'plan.md'), this.getManualTemplate('plan'));
-    await fs.writeFile(path.join(this.cxtPath, 'guardrail.md'), this.getManualTemplate('guardrail'));
+    return templates[type] || '';
   }
 
-
-  private getManualTemplate(type: string): string {
+  private getTemplateContent(type: string): string {
     const templates: Record<string, string> = {
       context: `# Project Context
 
@@ -555,7 +524,7 @@ ${projectDescription}
       },
       plan_management: {
         backup_on_switch: true,
-        template: 'minimal',
+        plan_template_style: undefined, // Will default to config.mode (blank or template)
         auto_commit_ai_changes: true,
         archive_completed: false
       },
@@ -574,13 +543,14 @@ ${projectDescription}
         auto_sync: false,
         health_checks: true,
         ai_attribution: true,
-        update_mode: 'manual',
+        update_mode: 'manual' as UpdateMode,
         drift_detection: true,
         warn_threshold: 3,
-        template_thresholds: {
-          well_populated: 30,
-          mild_warning: 50,
-          critical: 70
+        content_quality: {
+          min_content_length: 100,
+          min_content_lines: 3,
+          empty_section_warning: true,
+          short_content_warning: 200
         },
         show_in_changed_files: true,
         auto_commit_context_updates: false
@@ -596,8 +566,13 @@ ${projectDescription}
     file: string;
     status: string;
     staged: boolean;
-    contentStatus: 'populated' | 'template-only' | 'empty';
-    templatePercentage?: number;
+    contentStatus: ContentStatus;
+    contentQuality?: {
+      status: ContentStatus;
+      contentLength: number;
+      contentLines: number;
+      emptySections?: number;
+    };
     size: number;
   }>> {
     const files = ['context.md', 'plan.md', 'guardrail.md'];
@@ -608,7 +583,6 @@ ${projectDescription}
       const fullPath = path.join(this.cxtPath, file);
       let status = 'clean';
       let staged = false;
-      let contentStatus: 'populated' | 'template-only' | 'empty' = 'populated';
       let fileSize = 0;
 
       if (gitStatus.untracked.includes(filePath)) {
@@ -621,24 +595,30 @@ ${projectDescription}
         staged = true;
       }
 
-      // Check file content status
-      let templatePercentage: number | undefined;
+      // Get content quality info
+      let contentQuality: {
+        status: 'empty' | 'short' | 'populated';
+        contentLength: number;
+        contentLines: number;
+        emptySections?: number;
+      };
+      let contentStatus: ContentStatus = 'populated';
+      
       if (await fs.pathExists(fullPath)) {
         const stats = await fs.stat(fullPath);
         fileSize = stats.size;
         
         if (fileSize === 0) {
           contentStatus = 'empty';
-          templatePercentage = 100; // Empty is 100% template
+          contentQuality = { status: 'empty' as const, contentLength: 0, contentLines: 0 };
         } else {
           const content = await fs.readFile(fullPath, 'utf-8');
-          const detectionResult = this.detectContentStatus(content, file);
-          contentStatus = detectionResult.status;
-          templatePercentage = detectionResult.templatePercentage;
+          contentQuality = this.analyzeContentQuality(content, file);
+          contentStatus = contentQuality.status;
         }
       } else {
         contentStatus = 'empty';
-        templatePercentage = 100; // Missing file is 100% template
+        contentQuality = { status: 'empty' as const, contentLength: 0, contentLines: 0 };
       }
 
       return {
@@ -646,7 +626,7 @@ ${projectDescription}
         status,
         staged,
         contentStatus,
-        templatePercentage,
+        contentQuality,
         size: fileSize
       };
     }));
@@ -655,75 +635,94 @@ ${projectDescription}
   }
 
   /**
-   * Detect if file content is mostly template/placeholder content
-   * Returns status and percentage of template content (0-100)
+   * Analyze content quality - detect empty, short, or populated content
    */
-  private detectContentStatus(content: string, fileName: string): {
-    status: 'populated' | 'template-only' | 'empty';
-    templatePercentage: number;
+  private analyzeContentQuality(content: string, fileName: string): {
+    status: ContentStatus;
+    contentLength: number;
+    contentLines: number;
+    emptySections?: number;
   } {
     if (!content || content.trim().length === 0) {
-      return { status: 'empty', templatePercentage: 100 };
+      return { status: 'empty', contentLength: 0, contentLines: 0 };
     }
 
     const lines = content.split('\n');
-    let templateChars = 0;
-    let totalChars = 0;
+    let contentLength = 0;
+    let contentLines: string[] = [];
+    let emptySections = 0;
+    let inSection = false;
+    let sectionHasContent = false;
+    
+    // Default thresholds (should match ValidationEngine defaults)
+    const MIN_LENGTH = 100;
+    const MIN_LINES = 3;
     
     // Analyze each line
     for (const line of lines) {
       const trimmed = line.trim();
-      if (trimmed.length === 0) {
-        continue; // Skip empty lines
+      
+      // Check if this is a section header
+      if (trimmed.startsWith('##')) {
+        // If we were in a section and it had no content, count it as empty
+        if (inSection && !sectionHasContent) {
+          emptySections++;
+        }
+        inSection = true;
+        sectionHasContent = false;
+        continue; // Don't count headers as content
       }
       
-      totalChars += line.length;
+      // Skip empty lines
+      if (trimmed.length === 0) {
+        continue;
+      }
       
-      // Check if line is template/guidance content
-      const isTemplateLine = 
+      // Skip structural elements (metadata, horizontal rules, etc.)
+      const isStructural = 
+        trimmed.startsWith('#') || // Other headers
+        (trimmed.startsWith('*') && (trimmed.includes('Last Updated') || trimmed.includes('References') || trimmed.includes('This file') || trimmed.includes('contains stable') || trimmed.includes('branch-specific') || trimmed.includes('Branch:') || trimmed.includes('Created:'))) ||
+        trimmed.startsWith('---') ||
+        trimmed.match(/^[-*+]\s*$/) !== null;
+      
+      // Skip guidance comments (they're intentional in template mode)
+      const isGuidance = 
         trimmed.startsWith('<!--') ||
         trimmed.includes('GUIDANCE:') ||
         trimmed.includes('TIP:') ||
         trimmed.includes('Example:') ||
-        trimmed.startsWith('*') && (trimmed.includes('Last Updated') || trimmed.includes('References') || trimmed.includes('This file')) ||
         trimmed === '-->';
       
-      if (isTemplateLine) {
-        templateChars += line.length;
+      // Count actual user content
+      if (!isStructural && !isGuidance) {
+        contentLength += trimmed.length;
+        contentLines.push(trimmed);
+        if (inSection) {
+          sectionHasContent = true;
+        }
       }
     }
     
-    // Calculate percentage
-    const templatePercentage = totalChars > 0 
-      ? Math.round((templateChars / totalChars) * 100)
-      : 100;
+    // Check final section
+    if (inSection && !sectionHasContent) {
+      emptySections++;
+    }
     
-    // Count actual content lines
-    const contentLines = lines.filter(line => {
-      const trimmed = line.trim();
-      return trimmed.length > 0 && 
-             !trimmed.startsWith('<!--') && 
-             !trimmed.startsWith('*') &&
-             !trimmed.startsWith('#') &&
-             trimmed !== '-->' &&
-             !trimmed.includes('GUIDANCE:') &&
-             !trimmed.includes('TIP:') &&
-             !trimmed.includes('Example:');
-    });
-    
-    // Determine status based on percentage (unified threshold: 70%)
-    // If very few content lines, consider it template-only even if percentage is lower
-    let status: 'populated' | 'template-only' | 'empty';
-    if (templatePercentage >= 70 || (contentLines.length <= 3 && templatePercentage > 30)) {
-      status = 'template-only';
-      // If low content lines but percentage is borderline, adjust to reflect severity
-      if (contentLines.length <= 3 && templatePercentage <= 70) {
-        return { status, templatePercentage: Math.max(templatePercentage, 70) };
-      }
+    // Determine status
+    let status: ContentStatus;
+    if (contentLength === 0 || contentLines.length === 0) {
+      status = 'empty';
+    } else if (contentLength < MIN_LENGTH || contentLines.length < MIN_LINES) {
+      status = 'short';
     } else {
       status = 'populated';
     }
-
-    return { status, templatePercentage };
+    
+    return { 
+      status, 
+      contentLength, 
+      contentLines: contentLines.length,
+      emptySections: emptySections > 0 ? emptySections : undefined
+    };
   }
 } 

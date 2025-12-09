@@ -10,8 +10,8 @@ import type { InitOptions } from '@cxtmanager/core';
 
 export const initCommand = new Command('init')
   .description('Initialize CxtManager in current project (like git init)')
-  .option('--manual', 'Create empty templates for full user control')
-  .option('--minimal', 'Basic setup with minimal content')
+  .option('--template', 'Pre-structured with section headers and guidance')
+  .option('--blank', 'Just title and metadata (you organize it)')
   .action(async (options) => {
     try {
       const manager = new ContextManager();
@@ -24,8 +24,8 @@ export const initCommand = new Command('init')
       }
 
       // Question 1: Template Style
-      let mode: InitOptions['mode'] = 'auto';
-      if (!options.manual && !options.minimal) {
+      let mode: InitOptions['mode'] = 'blank';
+      if (!options.template && !options.blank) {
         console.log('');
         console.log(chalk.bold('📝 How would you like to initialize your context files?'));
         console.log('');
@@ -33,22 +33,17 @@ export const initCommand = new Command('init')
           {
             type: 'list',
             name: 'templateStyle',
-            message: 'Choose an option:',
+            message: 'Choose template style:',
             choices: [
               {
-                name: '1) Auto (Recommended) - Analyzes your project and suggests relevant sections',
-                value: 'auto',
-                short: 'Auto'
+                name: 'Blank - Just title and metadata (you organize it)',
+                value: 'blank',
+                short: 'Blank'
               },
               {
-                name: '2) Minimal - Creates basic structure with minimal content',
-                value: 'auto', // minimal maps to auto mode
-                short: 'Minimal'
-              },
-              {
-                name: '3) Manual - Creates empty templates with guidance comments',
-                value: 'manual',
-                short: 'Manual'
+                name: 'Template - Pre-structured with section headers and guidance',
+                value: 'template',
+                short: 'Template'
               }
             ],
             default: 0
@@ -294,7 +289,7 @@ export const initCommand = new Command('init')
       console.log(chalk.yellow('   cit validate         - Verify file alignment'));
       console.log(chalk.yellow('   cit log              - View context file history'));
       
-      if (mode === 'manual') {
+      if (mode === 'template') {
         console.log(chalk.yellow('   cit auto-heal        - Auto-fix any issues'));
         console.log('');
         console.log(chalk.blue('💡 The context files contain helpful comments explaining what to fill in.'));
@@ -316,9 +311,9 @@ export const initCommand = new Command('init')
   });
 
 function determineInitMode(options: any): InitOptions['mode'] {
-  if (options.manual) return 'manual';
-  if (options.minimal) return 'auto';
+  if (options.template) return 'template';
+  if (options.blank) return 'blank';
   
   // Default mode
-  return 'auto';
+  return 'blank';
 } 
