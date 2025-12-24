@@ -51,3 +51,5 @@ pnpm-debug.log*
 # Ideas and future planning documents
 .ideas/
 
+# cxt-manager: .cxt/ folder is private (not tracked in Git)
+.cxt/

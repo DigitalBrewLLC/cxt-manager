@@ -353,6 +353,38 @@ By default, `.cxt/` files are tracked in Git for team sharing. During `cit init`
 - Projects where context should remain local
 - Privacy-sensitive development workflows
 
+**Important: Understanding the Trade-off**
+
+**Tracked `.cxt/` (in Git):**
+- ✅ Works with Git-based context attachment in IDEs like Cursor
+- ✅ Shared with team through Git
+- ✅ Full version history in repository
+- ❌ Context files are committed to repository
+
+**Private `.cxt/` (in `.gitignore`):**
+- ✅ Files remain local and private
+- ✅ Still accessible via filesystem (AI can read them directly)
+- ✅ Works with manual file references in AI conversations
+- ❌ May not work with IDE Git-based context attachment features
+- ❌ Not shared with team through Git
+
+**How AI Tools Access `.cxt/` Files:**
+
+1. **Direct File System Access** (Always works):
+   - AI tools can read `.cxt/` files directly from the filesystem
+   - Works regardless of Git tracking status
+   - Use manual references: *"Read `.cxt/context.md` before we begin"*
+
+2. **Git-Based Context Attachment** (Only for tracked files):
+   - Some IDEs (like Cursor) can attach Git-tracked files as context
+   - Only works if `.cxt/` files are tracked in Git
+   - Private `.cxt/` files won't appear in Git-based context selectors
+
+**Recommendation:**
+- **Team projects:** Track `.cxt/` in Git for shared context
+- **Personal projects:** Choose based on whether you need Git-based IDE integration
+- **Sensitive context:** Keep private and use manual file references
+
 **To change this setting after initialization:**
 1. Edit `.cxt/.cxtconfig.json` and set `git_integration.track_in_git` to `false` (or `true`)
 2. Run `cit sync-gitignore` to apply the change to `.gitignore`
